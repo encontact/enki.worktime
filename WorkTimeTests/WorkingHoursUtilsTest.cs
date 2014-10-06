@@ -1,0 +1,439 @@
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using enki.libs.workhours;
+using enki.libs.workhours.domain;
+using NodaTime;
+using System;
+using System.Collections.Generic;
+
+namespace enki.tests.libs.date {
+	[TestClass]
+	public class WorkingHoursUtilsTest {
+		[TestMethod]
+		public void testWorkingMinutesBetween() {
+			WorkingWeek workingWeek = ComplexWorkingWeek.getWeek8x7();
+
+			WorkingHoursTable tabela = new WorkingHoursTable(workingWeek, new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalDateTime(2000, 1, 4, 0, 0, 0));
+
+			// testes em um único dia
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 1, 0, 0, 0, 0), new DateTime(2000, 1, 1, 0, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 1, 9, 0, 0, 0), new DateTime(2000, 1, 1, 9, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 1, 20, 0, 0, 0), new DateTime(2000, 1, 1, 20, 0, 0, 0)));
+
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 1, 0, 0, 0, 0), new DateTime(2000, 1, 1, 1, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 1, 22, 0, 0, 0), new DateTime(2000, 1, 1, 23, 0, 0, 0)));
+
+			Assert.AreEqual(8 * 60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 1, 0, 0, 0, 0), new DateTime(2000, 1, 1, 23, 0, 0, 0)));
+			Assert.AreEqual(60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 1, 8, 0, 0, 0), new DateTime(2000, 1, 1, 9, 0, 0, 0)));
+
+			// testes usando somente um dia sem horas úteis
+			tabela = new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalDateTime(2000, 1, 4, 0, 0, 0));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 8, 0, 0, 0, 0), new DateTime(2000, 1, 8, 0, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 8, 9, 0, 0, 0), new DateTime(2000, 1, 8, 9, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 8, 20, 0, 0, 0), new DateTime(2000, 1, 8, 20, 0, 0, 0)));
+
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 8, 0, 0, 0, 0), new DateTime(2000, 1, 8, 1, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 8, 22, 0, 0, 0), new DateTime(2000, 1, 8, 23, 0, 0, 0)));
+
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 8, 0, 0, 0, 0), new DateTime(2000, 1, 8, 23, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 8, 8, 0, 0, 0), new DateTime(2000, 1, 8, 9, 0, 0, 0)));
+
+			// testes usando dois dias com segundo dia sem nenhuma hora útil
+			Assert.AreEqual(8 * 60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 0, 0, 0, 0), new DateTime(2000, 1, 8, 23, 0, 0, 0)));
+			Assert.AreEqual(60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 15, 0, 0, 0), new DateTime(2000, 1, 8, 23, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 23, 0, 0, 0), new DateTime(2000, 1, 8, 23, 0, 0, 0)));
+
+			// testes usando dois dias com primeiro dia sem nenhuma hora útil
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 9, 0, 0, 0, 0), new DateTime(2000, 1, 10, 0, 0, 0, 0)));
+			Assert.AreEqual(60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 9, 0, 0, 0, 0), new DateTime(2000, 1, 10, 9, 0, 0, 0)));
+			Assert.AreEqual(8 * 60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 9, 0, 0, 0, 0), new DateTime(2000, 1, 10, 23, 0, 0, 0)));
+
+			// testes atravessando um readonlyde semana
+			Assert.AreEqual(120, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 15, 0, 0, 0), new DateTime(2000, 1, 10, 9, 0, 0, 0)));
+			Assert.AreEqual(60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 15, 0, 0, 0), new DateTime(2000, 1, 10, 7, 0, 0, 0)));
+			Assert.AreEqual(60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 15, 0, 0, 0), new DateTime(2000, 1, 10, 8, 0, 0, 0)));
+			Assert.AreEqual(61, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 15, 0, 0, 0), new DateTime(2000, 1, 10, 8, 1, 0, 0)));
+			Assert.AreEqual(60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 16, 0, 0, 0), new DateTime(2000, 1, 10, 9, 0, 0, 0)));
+			Assert.AreEqual(60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 17, 0, 0, 0), new DateTime(2000, 1, 10, 9, 0, 0, 0)));
+			Assert.AreEqual(61, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 15, 59, 0, 0), new DateTime(2000, 1, 10, 9, 0, 0, 0)));
+
+			// teste com período grande
+			tabela = new WorkingHoursTable(workingWeek, new LocalDateTime(1978, 7, 14, 0, 0, 0), new LocalDateTime(2009, 9, 15, 0, 0, 0));
+			Assert.AreEqual(11373 * 8 * 60, tabela.getWorkingMinutesBetween(new DateTime(1978, 7, 29, 0, 0, 0, 0), new DateTime(2009, 9, 17, 0, 0,
+					0, 0)));
+		}
+
+		[TestMethod]
+		public void testWorkingHoursBetween() {
+			WorkingWeek workingWeek = ComplexWorkingWeek.getWeek8x7();
+
+			WorkingHoursTable tabela = new WorkingHoursTable(workingWeek, new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalDateTime(2000, 1, 4, 0, 0, 0));
+
+			// testes em um único dia
+			Assert.AreEqual(0, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 1, 0, 0, 0, 0), new DateTime(2000, 1, 1, 0, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 1, 9, 0, 0, 0), new DateTime(2000, 1, 1, 9, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 1, 20, 0, 0, 0), new DateTime(2000, 1, 1, 20, 0, 0, 0)));
+
+			Assert.AreEqual(0, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 1, 0, 0, 0, 0), new DateTime(2000, 1, 1, 1, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 1, 22, 0, 0, 0), new DateTime(2000, 1, 1, 23, 0, 0, 0)));
+
+			Assert.AreEqual(8, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 1, 0, 0, 0, 0), new DateTime(2000, 1, 1, 23, 0, 0, 0)));
+			Assert.AreEqual(1, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 1, 8, 0, 0, 0), new DateTime(2000, 1, 1, 9, 0, 0, 0)));
+
+			// testes usando somente um dia sem horas úteis
+			tabela = new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalDateTime(2000, 1, 4, 0, 0, 0));
+			Assert.AreEqual(0, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 8, 0, 0, 0, 0), new DateTime(2000, 1, 8, 0, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 8, 9, 0, 0, 0), new DateTime(2000, 1, 8, 9, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 8, 20, 0, 0, 0), new DateTime(2000, 1, 8, 20, 0, 0, 0)));
+
+			Assert.AreEqual(0, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 8, 0, 0, 0, 0), new DateTime(2000, 1, 8, 1, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 8, 22, 0, 0, 0), new DateTime(2000, 1, 8, 23, 0, 0, 0)));
+
+			Assert.AreEqual(0, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 8, 0, 0, 0, 0), new DateTime(2000, 1, 8, 23, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 8, 8, 0, 0, 0), new DateTime(2000, 1, 8, 9, 0, 0, 0)));
+
+			// testes usando dois dias com segundo dia sem nenhuma hora útil
+			Assert.AreEqual(8, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 7, 0, 0, 0, 0), new DateTime(2000, 1, 8, 23, 0, 0, 0)));
+			Assert.AreEqual(1, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 7, 15, 0, 0, 0), new DateTime(2000, 1, 8, 23, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 7, 23, 0, 0, 0), new DateTime(2000, 1, 8, 23, 0, 0, 0)));
+
+			// testes usando dois dias com primeiro dia sem nenhuma hora útil
+			Assert.AreEqual(0, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 9, 0, 0, 0, 0), new DateTime(2000, 1, 10, 0, 0, 0, 0)));
+			Assert.AreEqual(1, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 9, 0, 0, 0, 0), new DateTime(2000, 1, 10, 9, 0, 0, 0)));
+			Assert.AreEqual(8, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 9, 0, 0, 0, 0), new DateTime(2000, 1, 10, 23, 0, 0, 0)));
+
+			// testes atravessando um readonlyde semana
+			Assert.AreEqual(2, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 7, 15, 0, 0, 0), new DateTime(2000, 1, 10, 9, 0, 0, 0)));
+			Assert.AreEqual(1, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 7, 15, 0, 0, 0), new DateTime(2000, 1, 10, 7, 0, 0, 0)));
+			Assert.AreEqual(1, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 7, 15, 0, 0, 0), new DateTime(2000, 1, 10, 8, 0, 0, 0)));
+			Assert.AreEqual(1, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 7, 15, 0, 0, 0), new DateTime(2000, 1, 10, 8, 1, 0, 0)));
+			Assert.AreEqual(1, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 7, 16, 0, 0, 0), new DateTime(2000, 1, 10, 9, 0, 0, 0)));
+			Assert.AreEqual(1, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 7, 17, 0, 0, 0), new DateTime(2000, 1, 10, 9, 0, 0, 0)));
+			Assert.AreEqual(1, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 7, 15, 59, 0, 0), new DateTime(2000, 1, 10, 9, 0, 0, 0)));
+
+			// teste com período grande
+			tabela = new WorkingHoursTable(workingWeek, new LocalDateTime(1978, 7, 15, 0, 0, 0), new LocalDateTime(1978, 7, 16, 0, 0, 0));
+			Assert.AreEqual(11373 * 8, tabela.getWorkingHoursBetween(new DateTime(1978, 7, 29, 0, 0, 0, 0), new DateTime(2009, 9, 17, 0, 0, 0, 0)));
+		}
+
+		[TestMethod]
+		public void testWorkingHoursBetweenWithExceptions() {
+			SortedSet<WorkingDaySlice> exceptions = new SortedSet<WorkingDaySlice>();
+			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalTime(12, 0, 0), new LocalTime(16, 0, 0)));
+			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 6, 0, 0, 0), new LocalTime(0, 0, 0), new LocalTime(0, 0, 0)));
+
+			WorkingHoursTable tabela = new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), new List<WorkingDaySlice>(), exceptions, new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalDateTime(2000, 1, 4, 0, 0, 0));
+			Assert.AreEqual(28, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 1, 0, 0, 0, 0), new DateTime(2000, 1, 10, 0, 0, 0, 0)));
+		}
+
+		[TestMethod]
+		public void testRecurrentExceptions() {
+			List<WorkingDaySlice> recurrentExceptions = new List<WorkingDaySlice>();
+			SortedSet<WorkingDaySlice> exceptions = new SortedSet<WorkingDaySlice>();
+			recurrentExceptions.Add(new SimpleWorkingDay(new LocalDateTime(2010, 7, 3, 0, 0, 0), (short)0, (short)0));
+
+			DateTime min = new DateTime(2000, 1, 1, 0, 0, 0, 0);
+			DateTime max = new DateTime(2010, 12, 31, 23, 59, 59, 999);
+			long total = 1377600;
+
+			WorkingHoursTable tabela = new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), new LocalDateTime(2000, 1, 1, 0, 0, 0), new LocalDateTime(2010, 12, 31, 0, 0, 0));
+			Assert.AreEqual(total, tabela.getWorkingMinutesBetween(min, max));
+
+			tabela =
+					new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), recurrentExceptions, exceptions, new LocalDateTime(2000, 1, 1, 0, 0, 0), new LocalDateTime(2010, 12, 31, 0, 0, 0));
+			Assert.AreEqual(total - 8 * 8 * 60, tabela.getWorkingMinutesBetween(min, max));
+
+			recurrentExceptions.Clear();
+			recurrentExceptions.Add(new SimpleWorkingDay(new LocalDateTime(2010, 1, 3, 0, 0, 0), (short)0, (short)0));
+			tabela =
+					new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), recurrentExceptions, exceptions, new LocalDateTime(2000, 1, 1, 0, 0, 0), new LocalDateTime(2010, 12, 31, 0, 0, 0));
+			Assert.AreEqual(total - 8 * 8 * 60, tabela.getWorkingMinutesBetween(min, max));
+
+			// as exceções normais devem se sobrepor às recorrentes
+			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalTime(8, 0, 0), new LocalTime(16, 0, 0)));
+			tabela =
+					new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), recurrentExceptions, exceptions, new LocalDateTime(2000, 1, 1, 0, 0, 0), new LocalDateTime(2010, 12, 31, 0, 0, 0));
+			Assert.AreEqual(total - 7 * 8 * 60, tabela.getWorkingMinutesBetween(min, max));
+		}
+
+		[TestMethod]
+		public void testOutOfBounds() {
+			WorkingHoursTable tabela = new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalDateTime(2000, 1, 4, 0, 0, 0));
+			tabela.getWorkingHoursBetween(new DateTime(1999, 12, 31, 23, 59, 59, 999), new DateTime(2000, 1, 10, 0, 0, 0, 0));
+			tabela.getWorkingHoursBetween(new DateTime(2001, 1, 1, 0, 0, 0, 0), new DateTime(2000, 1, 10, 0, 0, 0, 0));
+			tabela.getWorkingHoursBetween(new DateTime(2000, 1, 10, 0, 0, 0, 0), new DateTime(1999, 12, 31, 23, 59, 59, 999));
+			tabela.getWorkingHoursBetween(new DateTime(2000, 1, 10, 0, 0, 0, 0), new DateTime(2001, 1, 1, 0, 0, 0, 0));
+		}
+
+		[TestMethod]
+		public void testAddWorkingHoursDateTime() {
+			WorkingHoursTable tabela = new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), new LocalDateTime(1999, 1, 3, 0, 0, 0), new LocalDateTime(2000, 1, 4, 0, 0, 0));
+
+			Assert.AreEqual(new DateTime(2000, 1, 3, 16, 0, 0, 0), tabela.addWorkingHours(new DateTime(2000, 1, 1, 0, 0, 0, 0), 8, 0));
+			Assert.AreEqual(new DateTime(2000, 1, 1, 0, 0, 0, 0), tabela.addWorkingHours(new DateTime(2000, 1, 1, 0, 0, 0, 0), 0, 0));
+			Assert.AreEqual(new DateTime(2000, 1, 7, 16, 0, 0, 0), tabela.addWorkingHours(new DateTime(2000, 1, 1, 0, 0, 0, 0), 40, 0));
+			Assert.AreEqual(new DateTime(2000, 1, 10, 9, 0, 0, 0), tabela.addWorkingHours(new DateTime(2000, 1, 1, 0, 0, 0, 0), 41, 0));
+			Assert.AreEqual(new DateTime(2000, 1, 14, 16, 0, 0, 0), tabela.addWorkingHours(new DateTime(2000, 1, 1, 0, 0, 0, 0), 80, 0));
+			Assert.AreEqual(new DateTime(2009, 11, 19, 9, 0, 0, 0), tabela.addWorkingHours(new DateTime(2009, 11, 18, 17, 7, 43, 860), 1, 0));
+			Assert.AreEqual(new DateTime(2009, 11, 19, 8, 7, 0, 0), tabela.addWorkingHours(new DateTime(2009, 11, 18, 15, 7, 43, 860), 1, 0));
+			Assert.AreEqual(new DateTime(2009, 11, 19, 8, 8, 0, 0), tabela.addWorkingHours(new DateTime(2009, 11, 18, 15, 8, 0, 0), 1, 0));
+			Assert.AreEqual(new DateTime(2000, 1, 3, 0, 0, 0, 0), tabela.addWorkingHours(new DateTime(2000, 1, 3, 0, 0, 0, 0), 0, 0));
+
+			SortedSet<WorkingDaySlice> exceptions = new SortedSet<WorkingDaySlice>();
+			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalTime(12, 0, 0), new LocalTime(16, 0, 0)));
+			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 6, 0, 0, 0), new LocalTime(0, 0, 0), new LocalTime(0, 0, 0)));
+
+			tabela =
+					new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), new List<WorkingDaySlice>(), exceptions, new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalDateTime(2000,
+							1, 4, 0, 0, 0));
+			Assert.AreEqual(new DateTime(2000, 1, 10, 8, 1, 0, 0), tabela.addWorkingHours(new DateTime(2000, 1, 1, 0, 0, 0, 0), 28, 1));
+
+			DateTime now = new DateTime(2009, 9, 22, 0, 0, 0, 0);
+			WorkingWeek week = ComplexWorkingWeek.getWeek8x5();
+			WorkingHoursTable hoursTable = new WorkingHoursTable(week, now.AddDays(1), now.AddDays(2));
+			DateTime addWorkingHours = hoursTable.addWorkingHours(now, 0, 60);
+			Assert.AreEqual(new DateTime(2009, 9, 22, 9, 0, 0, 0), addWorkingHours);
+		}
+
+		[TestMethod]
+		public void testAddWorkingHoursLocalDateTime() {
+			WorkingHoursTable tabela = new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), new LocalDateTime(1999, 1, 3, 0, 0, 0), new LocalDateTime(2000, 1, 4, 0, 0, 0));
+
+			Assert.AreEqual(new LocalDateTime(2000, 1, 3, 16, 0, 0, 0), tabela.addWorkingHours(new LocalDateTime(2000, 1, 1, 0, 0, 0, 0), 8, 0));
+			Assert.AreEqual(new LocalDateTime(2000, 1, 1, 0, 0, 0, 0), tabela.addWorkingHours(new LocalDateTime(2000, 1, 1, 0, 0, 0, 0), 0, 0));
+			Assert.AreEqual(new LocalDateTime(2000, 1, 7, 16, 0, 0, 0), tabela.addWorkingHours(new LocalDateTime(2000, 1, 1, 0, 0, 0, 0), 40, 0));
+			Assert.AreEqual(new LocalDateTime(2000, 1, 10, 9, 0, 0, 0), tabela.addWorkingHours(new LocalDateTime(2000, 1, 1, 0, 0, 0, 0), 41, 0));
+			Assert.AreEqual(new LocalDateTime(2000, 1, 14, 16, 0, 0, 0), tabela.addWorkingHours(new LocalDateTime(2000, 1, 1, 0, 0, 0, 0), 80, 0));
+			Assert.AreEqual(new LocalDateTime(2009, 11, 19, 9, 0, 0, 0), tabela.addWorkingHours(new LocalDateTime(2009, 11, 18, 17, 7, 43, 860), 1, 0));
+			Assert.AreEqual(new LocalDateTime(2009, 11, 19, 8, 7, 0, 0), tabela.addWorkingHours(new LocalDateTime(2009, 11, 18, 15, 7, 43, 860), 1, 0));
+			Assert.AreEqual(new LocalDateTime(2009, 11, 19, 8, 8, 0, 0), tabela.addWorkingHours(new LocalDateTime(2009, 11, 18, 15, 8, 0, 0), 1, 0));
+			Assert.AreEqual(new LocalDateTime(2000, 1, 3, 0, 0, 0, 0), tabela.addWorkingHours(new LocalDateTime(2000, 1, 3, 0, 0, 0, 0), 0, 0));
+
+			SortedSet<WorkingDaySlice> exceptions = new SortedSet<WorkingDaySlice>();
+			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalTime(12, 0, 0), new LocalTime(16, 0, 0)));
+			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 6, 0, 0, 0), new LocalTime(0, 0, 0), new LocalTime(0, 0, 0)));
+
+			tabela = new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), new List<WorkingDaySlice>(), exceptions, new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalDateTime(2000, 1, 4, 0, 0, 0));
+			Assert.AreEqual(new LocalDateTime(2000, 1, 10, 8, 1, 0, 0), tabela.addWorkingHours(new LocalDateTime(2000, 1, 1, 0, 0, 0, 0), 28, 1));
+
+			LocalDateTime now = new LocalDateTime(2009, 9, 22, 0, 0, 0, 0);
+			WorkingWeek week = ComplexWorkingWeek.getWeek8x5();
+			WorkingHoursTable hoursTable = new WorkingHoursTable(week, now.PlusDays(1), now.PlusDays(2));
+			LocalDateTime addWorkingHours = hoursTable.addWorkingHours(now, 0, 60);
+			Assert.AreEqual(new LocalDateTime(2009, 9, 22, 9, 0, 0, 0), addWorkingHours);
+		}
+
+		[TestMethod]
+		public void testWorkingMinutesBetweenWithPeriods() {
+			WorkingWeek workingWeek = ComplexWorkingWeek.getWeek8x7In2Periodos();
+
+			WorkingHoursTable tabela = new WorkingHoursTable(workingWeek, new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalDateTime(2000, 1, 4, 0, 0, 0));
+
+			// testes em um único dia
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 1, 0, 0, 0, 0), new DateTime(2000, 1, 1, 0, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 1, 9, 0, 0, 0), new DateTime(2000, 1, 1, 9, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 1, 20, 0, 0, 0), new DateTime(2000, 1, 1, 20, 0, 0, 0)));
+
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 1, 0, 0, 0, 0), new DateTime(2000, 1, 1, 1, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 1, 22, 0, 0, 0), new DateTime(2000, 1, 1, 23, 0, 0, 0)));
+
+			Assert.AreEqual(8 * 60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 1, 0, 0, 0, 0), new DateTime(2000, 1, 1, 23, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 1, 8, 0, 0, 0), new DateTime(2000, 1, 1, 9, 0, 0, 0)));
+			Assert.AreEqual(60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 1, 9, 0, 0, 0), new DateTime(2000, 1, 1, 10, 0, 0, 0)));
+
+			// testes usando somente um dia sem horas úteis
+			tabela = new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalDateTime(2000, 1, 4, 0, 0, 0));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 8, 0, 0, 0, 0), new DateTime(2000, 1, 8, 0, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 8, 9, 0, 0, 0), new DateTime(2000, 1, 8, 9, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 8, 20, 0, 0, 0), new DateTime(2000, 1, 8, 20, 0, 0, 0)));
+
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 8, 0, 0, 0, 0), new DateTime(2000, 1, 8, 1, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 8, 22, 0, 0, 0), new DateTime(2000, 1, 8, 23, 0, 0, 0)));
+
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 8, 0, 0, 0, 0), new DateTime(2000, 1, 8, 23, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 8, 8, 0, 0, 0), new DateTime(2000, 1, 8, 9, 0, 0, 0)));
+
+			// testes usando dois dias com segundo dia sem nenhuma hora útil
+			Assert.AreEqual(8 * 60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 0, 0, 0, 0), new DateTime(2000, 1, 8, 23, 0, 0, 0)));
+			Assert.AreEqual(60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 15, 0, 0, 0), new DateTime(2000, 1, 8, 23, 0, 0, 0)));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 23, 0, 0, 0), new DateTime(2000, 1, 8, 23, 0, 0, 0)));
+
+			// testes usando dois dias com primeiro dia sem nenhuma hora útil
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 9, 0, 0, 0, 0), new DateTime(2000, 1, 10, 0, 0, 0, 0)));
+			Assert.AreEqual(60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 9, 0, 0, 0, 0), new DateTime(2000, 1, 10, 9, 0, 0, 0)));
+			Assert.AreEqual(8 * 60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 9, 0, 0, 0, 0), new DateTime(2000, 1, 10, 23, 0, 0, 0)));
+
+			// testes atravessando um readonlyde semana
+			Assert.AreEqual(120, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 15, 0, 0, 0), new DateTime(2000, 1, 10, 9, 0, 0, 0)));
+			Assert.AreEqual(60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 15, 0, 0, 0), new DateTime(2000, 1, 10, 7, 0, 0, 0)));
+			Assert.AreEqual(60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 15, 0, 0, 0), new DateTime(2000, 1, 10, 8, 0, 0, 0)));
+			Assert.AreEqual(61, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 15, 0, 0, 0), new DateTime(2000, 1, 10, 8, 1, 0, 0)));
+			Assert.AreEqual(60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 16, 0, 0, 0), new DateTime(2000, 1, 10, 9, 0, 0, 0)));
+			Assert.AreEqual(60, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 17, 0, 0, 0), new DateTime(2000, 1, 10, 9, 0, 0, 0)));
+			Assert.AreEqual(61, tabela.getWorkingMinutesBetween(new DateTime(2000, 1, 7, 15, 59, 0, 0), new DateTime(2000, 1, 10, 9, 0, 0, 0)));
+
+			// teste com período grande
+			tabela = new WorkingHoursTable(workingWeek, new LocalDateTime(1978, 7, 14, 0, 0, 0), new LocalDateTime(2009, 9, 15, 0, 0, 0));
+			Assert.AreEqual(11373 * 8 * 60, tabela.getWorkingMinutesBetween(new DateTime(1978, 7, 29, 0, 0, 0, 0), new DateTime(2009, 9, 17, 0, 0,
+					0, 0)));
+
+			Assert.AreEqual(new LocalDateTime(2000, 1, 1, 14, 30, 0, 0), tabela.addWorkingHours(new LocalDateTime(2000, 1, 1, 11, 30, 0, 0), 2, 0));
+
+		}
+
+		[TestMethod]
+		public void testWorkingHoursTableExceptions() {
+			short h = 60;
+			short h_0000 = 0;
+			short h_0800 = (short)(h * 8);
+			short h_0900 = (short)(h * 9);
+			short h_1200 = (short)(h * 12);
+			short h_1300 = (short)(h * 13);
+			short h_1800 = (short)(h * 18);
+			short h_2400 = (short)(h * 24);
+			short workDay = h_0800;
+
+			WorkingWeek workingWeek = ComplexWorkingWeek.getWeek8x7In2Periodos();
+			List<WorkingDaySlice> recurrentExceptions = new List<WorkingDaySlice> {
+				new SimpleWorkingDay(new DateTime(2011,12,29),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2012,12,29),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2012,12,30),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2012,12,31),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2013,1,1),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2013,1,2),h_0000,h_2400),
+			};
+			WorkingHoursTable tabela = new WorkingHoursTable(workingWeek, recurrentExceptions,
+				new SortedSet<WorkingDaySlice>(), new LocalDateTime(2012, 12, 28, 0, 0, 0), new LocalDateTime(2013, 1, 2, 0, 0, 0));
+			Assert.AreEqual(workDay, tabela.getWorkingMinutesBetween(new DateTime(2012, 12, 28, 0, 0, 0, 0), new DateTime(2013, 1, 2, 23, 59, 59, 0)));
+
+
+			recurrentExceptions = new List<WorkingDaySlice> {
+				new SimpleWorkingDay(new DateTime(2011,12,28),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2012,12,31),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2013,1,1),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2013,1,2),h_0000,h_2400),
+			};
+			tabela = new WorkingHoursTable(workingWeek, recurrentExceptions,
+				new SortedSet<WorkingDaySlice>(), new LocalDateTime(2012, 12, 28, 0, 0, 0), new LocalDateTime(2013, 1, 3, 0, 0, 0));
+			Assert.AreEqual(workDay * 3, tabela.getWorkingMinutesBetween(new DateTime(2012, 12, 28, 0, 0, 0, 0), new DateTime(2013, 1, 2, 23, 59, 59, 0)));
+
+			recurrentExceptions = new List<WorkingDaySlice> {
+				new SimpleWorkingDay(new DateTime(2012,12,28),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2012,12,29),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2012,12,30),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2012,12,31),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2013,1,1),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2013,1,2),h_0000,h_2400),
+			};
+			tabela = new WorkingHoursTable(workingWeek, recurrentExceptions,
+				new SortedSet<WorkingDaySlice>(), new LocalDateTime(2012, 12, 28, 0, 0, 0), new LocalDateTime(2013, 1, 2, 0, 0, 0));
+			Assert.AreEqual(workDay * 0, tabela.getWorkingMinutesBetween(new DateTime(2012, 12, 28, 0, 0, 0, 0), new DateTime(2013, 1, 2, 23, 59, 59, 0)));
+
+			recurrentExceptions = new List<WorkingDaySlice> {
+				new SimpleWorkingDay(new DateTime(2011,12,29),h_1300,h_1800),
+				new SimpleWorkingDay(new DateTime(2012,12,28),h_0000,h_1200),
+				new SimpleWorkingDay(new DateTime(2012,12,30),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2012,12,31),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2013,1,1),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2013,1,2),h_0000,h_2400),
+			};
+			tabela = new WorkingHoursTable(workingWeek, recurrentExceptions,
+				new SortedSet<WorkingDaySlice>(), new LocalDateTime(2012, 12, 28, 0, 0, 0), new LocalDateTime(2013, 1, 2, 0, 0, 0));
+			Assert.AreEqual(workDay + (h * 5), tabela.getWorkingMinutesBetween(new DateTime(2012, 12, 28, 0, 0, 0, 0), new DateTime(2013, 1, 2, 23, 59, 59, 0)));
+
+			recurrentExceptions = new List<WorkingDaySlice> {
+				new SimpleWorkingDay(new DateTime(2011,12,28),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2011,12,29),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2012,12,30),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2012,12,31),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2013,1,1),h_0000,h_2400),
+				new SimpleWorkingDay(new DateTime(2013,1,2),h_0000,h_2400),
+			};
+			tabela = new WorkingHoursTable(workingWeek, recurrentExceptions,
+				new SortedSet<WorkingDaySlice>(), new LocalDateTime(2012, 12, 28, 0, 0, 0), new LocalDateTime(2013, 1, 2, 0, 0, 0));
+			Assert.AreEqual(workDay * 2, tabela.getWorkingMinutesBetween(new DateTime(2012, 12, 28, 0, 0, 0, 0), new DateTime(2013, 1, 2, 23, 59, 59, 0)));
+		}
+
+		[TestMethod]
+		public void testWorkingHoursTimeModification() {
+			short h = 60;
+			short h_0000 = 0;
+			short h_0800 = (short)(h * 8);
+			short h_0900 = (short)(h * 9);
+			short h_1200 = (short)(h * 12);
+			short h_1300 = (short)(h * 13);
+			short h_1800 = (short)(h * 18);
+			short h_2400 = (short)(h * 24);
+			short workDay = h_0800;
+
+			WorkingWeek workingWeek = ComplexWorkingWeek.GetWeek8X5In2Periodos();
+			SortedSet<WorkingDaySlice> exceptions = new SortedSet<WorkingDaySlice> {
+				new SimpleWorkingDay(new DateTime(2012,12,7),h_0000,h_2400),
+			};
+			WorkingHoursTable tabela = new WorkingHoursTable(workingWeek, new List<WorkingDaySlice>(),
+				exceptions, new LocalDateTime(2012, 12, 1, 0, 0, 0), new LocalDateTime(2012, 12, 10, 0, 0, 0));
+			Assert.AreEqual(workDay, tabela.getWorkingMinutesBetween(new DateTime(2012, 12, 6, 0, 0, 0, 0), new DateTime(2012, 12, 8, 0, 0, 0, 0)));
+		}
+
+		[TestMethod]
+		public void testWorkingMinutesBetweenWithExceptions() {
+			SortedSet<WorkingDaySlice> exceptions = new SortedSet<WorkingDaySlice>();
+			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2012, 12, 7, 0, 0, 0), new LocalTime(0, 0, 0), new LocalTime(23, 59, 59)));
+			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2012, 12, 10, 0, 0, 0), new LocalTime(0, 0, 0), new LocalTime(23, 59, 59)));
+
+			WorkingHoursTable tabela = new WorkingHoursTable(ComplexWorkingWeek.GetWeek8X5In2Periodos(), new List<WorkingDaySlice>(), exceptions, new LocalDateTime(2012, 12, 1, 0, 0, 0), new LocalDateTime(2012, 12, 10, 23, 59, 59));
+			Assert.AreEqual(215, tabela.getWorkingMinutesBetween(new DateTime(2012, 12, 6, 14, 25, 0, 0), new DateTime(2012, 12, 7, 11, 37, 0, 0)));
+		}
+
+		[TestMethod]
+		public void testGetExceptionDaySlices() {
+			short h = 60;
+			short h_0000 = 0;
+			short h_0800 = (short)(h * 8);
+			short h_0900 = (short)(h * 9);
+			short h_1000 = (short)(h * 10);
+			short h_1200 = (short)(h * 12);
+			short h_1300 = (short)(h * 13);
+			short h_1400 = (short)(h * 14);
+			short h_1800 = (short)(h * 18);
+			short h_2400 = (short)(h * 24);
+			short workDay = h_0800;
+			var workingPeriods = new List<WorkingPeriod> {
+				new WorkingPeriod(0,h_0900,h_1200),
+				new WorkingPeriod(0,h_1300,h_1800)
+			};
+
+			short start = h_0000;
+			short end = h_0000;
+			var ret = WorkingHoursTable.GetExceptionDaySlices(start, end, workingPeriods);
+			Assert.AreEqual(2, ret.Count);
+			Assert.AreEqual(h_0900, ret[0].Item1);
+			Assert.AreEqual(h_1200, ret[0].Item2);
+			Assert.AreEqual(h_1300, ret[1].Item1);
+			Assert.AreEqual(h_1800, ret[1].Item2);
+
+			start = h_0900;
+			end = h_1200;
+			ret = WorkingHoursTable.GetExceptionDaySlices(start, end, workingPeriods);
+			Assert.AreEqual(1, ret.Count);
+			Assert.AreEqual(h_1300, ret[0].Item1);
+			Assert.AreEqual(h_1800, ret[0].Item2);
+
+			start = h_1300;
+			end = h_1800;
+			ret = WorkingHoursTable.GetExceptionDaySlices(start, end, workingPeriods);
+			Assert.AreEqual(1, ret.Count);
+			Assert.AreEqual(h_0900, ret[0].Item1);
+			Assert.AreEqual(h_1200, ret[0].Item2);
+
+			start = h_1000;
+			end = h_1400;
+			ret = WorkingHoursTable.GetExceptionDaySlices(start, end, workingPeriods);
+			Assert.AreEqual(2, ret.Count);
+			Assert.AreEqual(h_0900, ret[0].Item1);
+			Assert.AreEqual(h_1000, ret[0].Item2);
+			Assert.AreEqual(h_1400, ret[1].Item1);
+			Assert.AreEqual(h_1800, ret[1].Item2);
+
+		}
+	}
+}
