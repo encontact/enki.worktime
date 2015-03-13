@@ -37,7 +37,7 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="NodaTime">
       <HintPath>..\..\libs\NodaTime.dll</HintPath>
     </Reference>
@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="DateUtilsTest.cs" />
+    <Compile Include="RecurrentExceptionsBucketTests.cs" />
     <Compile Include="WorkingHoursUtilsTest.cs" />
   </ItemGroup>
   <ItemGroup>

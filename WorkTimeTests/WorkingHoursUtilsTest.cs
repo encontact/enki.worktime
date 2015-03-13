@@ -1,6 +1,6 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using enki.libs.workhours;
 using enki.libs.workhours.domain;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NodaTime;
 using System;
 using System.Collections.Generic;
@@ -8,6 +8,7 @@ using System.Collections.Generic;
 namespace enki.tests.libs.date {
 	[TestClass]
 	public class WorkingHoursUtilsTest {
+
 		[TestMethod]
 		public void testWorkingMinutesBetween() {
 			WorkingWeek workingWeek = ComplexWorkingWeek.getWeek8x7();
@@ -118,8 +119,10 @@ namespace enki.tests.libs.date {
 		[TestMethod]
 		public void testWorkingHoursBetweenWithExceptions() {
 			SortedSet<WorkingDaySlice> exceptions = new SortedSet<WorkingDaySlice>();
-			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalTime(12, 0, 0), new LocalTime(16, 0, 0)));
-			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 6, 0, 0, 0), new LocalTime(0, 0, 0), new LocalTime(0, 0, 0)));
+			// Registra feriado de trabalho das 00:00 até o 12:00 do dia 03/01/2000
+			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalTime(0, 0, 0), new LocalTime(12, 0, 0)));
+			// Registra feriado no dia 06/01/2000 das 08:00 as 16:00 (ou seja, o dia período todo do dia não trabalhado)
+			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 6, 0, 0, 0), new LocalTime(8, 0, 0), new LocalTime(16, 0, 0)));
 
 			WorkingHoursTable tabela = new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), new List<WorkingDaySlice>(), exceptions, new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalDateTime(2000, 1, 4, 0, 0, 0));
 			Assert.AreEqual(28, tabela.getWorkingHoursBetween(new DateTime(2000, 1, 1, 0, 0, 0, 0), new DateTime(2000, 1, 10, 0, 0, 0, 0)));
@@ -129,30 +132,32 @@ namespace enki.tests.libs.date {
 		public void testRecurrentExceptions() {
 			List<WorkingDaySlice> recurrentExceptions = new List<WorkingDaySlice>();
 			SortedSet<WorkingDaySlice> exceptions = new SortedSet<WorkingDaySlice>();
-			recurrentExceptions.Add(new SimpleWorkingDay(new LocalDateTime(2010, 7, 3, 0, 0, 0), (short)0, (short)0));
 
 			DateTime min = new DateTime(2000, 1, 1, 0, 0, 0, 0);
 			DateTime max = new DateTime(2010, 12, 31, 23, 59, 59, 999);
 			long total = 1377600;
 
+			// Verifica o período total
 			WorkingHoursTable tabela = new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), new LocalDateTime(2000, 1, 1, 0, 0, 0), new LocalDateTime(2010, 12, 31, 0, 0, 0));
 			Assert.AreEqual(total, tabela.getWorkingMinutesBetween(min, max));
 
-			tabela =
-					new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), recurrentExceptions, exceptions, new LocalDateTime(2000, 1, 1, 0, 0, 0), new LocalDateTime(2010, 12, 31, 0, 0, 0));
-			Assert.AreEqual(total - 8 * 8 * 60, tabela.getWorkingMinutesBetween(min, max));
+			// Verifica o periodo total com um feriado
+			recurrentExceptions.Add(new SimpleWorkingDay(new LocalDateTime(2010, 7, 3, 0, 0, 0), (short)480, (short)960));
+			tabela = new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), recurrentExceptions, exceptions, new LocalDateTime(2000, 1, 1, 0, 0, 0), new LocalDateTime(2010, 12, 31, 0, 0, 0));
+			var HorasDoFeriadoNosAnos = 8 * 8 * 60; // 8 horas dia vezes 8 dias no período que são dias comerciais vezes 60 minutos por dia.
+			Assert.AreEqual(total - HorasDoFeriadoNosAnos, tabela.getWorkingMinutesBetween(min, max));
 
+			// Verifica o periodo com o feriado em outra data
 			recurrentExceptions.Clear();
-			recurrentExceptions.Add(new SimpleWorkingDay(new LocalDateTime(2010, 1, 3, 0, 0, 0), (short)0, (short)0));
-			tabela =
-					new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), recurrentExceptions, exceptions, new LocalDateTime(2000, 1, 1, 0, 0, 0), new LocalDateTime(2010, 12, 31, 0, 0, 0));
-			Assert.AreEqual(total - 8 * 8 * 60, tabela.getWorkingMinutesBetween(min, max));
+			recurrentExceptions.Add(new SimpleWorkingDay(new LocalDateTime(2010, 1, 3, 0, 0, 0), (short)0, (short)1440));
+			tabela = new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), recurrentExceptions, exceptions, new LocalDateTime(2000, 1, 1, 0, 0, 0), new LocalDateTime(2010, 12, 31, 0, 0, 0));
+			Assert.AreEqual(total - HorasDoFeriadoNosAnos, tabela.getWorkingMinutesBetween(min, max));
 
-			// as exceções normais devem se sobrepor às recorrentes
-			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalTime(8, 0, 0), new LocalTime(16, 0, 0)));
-			tabela =
-					new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), recurrentExceptions, exceptions, new LocalDateTime(2000, 1, 1, 0, 0, 0), new LocalDateTime(2010, 12, 31, 0, 0, 0));
-			Assert.AreEqual(total - 7 * 8 * 60, tabela.getWorkingMinutesBetween(min, max));
+			// Teste considerando que exceções normais devem se sobrepor às recorrentes
+			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalTime(0, 0, 0), new LocalTime(7, 0, 0)));
+			tabela = new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), recurrentExceptions, exceptions, new LocalDateTime(2000, 1, 1, 0, 0, 0), new LocalDateTime(2010, 12, 31, 0, 0, 0));
+			var HorasDoFeriadoNosAnosMenosUm = 7 * 8 * 60;
+			Assert.AreEqual(total - HorasDoFeriadoNosAnosMenosUm, tabela.getWorkingMinutesBetween(min, max));
 		}
 
 		[TestMethod]
@@ -179,8 +184,10 @@ namespace enki.tests.libs.date {
 			Assert.AreEqual(new DateTime(2000, 1, 3, 0, 0, 0, 0), tabela.addWorkingHours(new DateTime(2000, 1, 3, 0, 0, 0, 0), 0, 0));
 
 			SortedSet<WorkingDaySlice> exceptions = new SortedSet<WorkingDaySlice>();
-			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalTime(12, 0, 0), new LocalTime(16, 0, 0)));
-			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 6, 0, 0, 0), new LocalTime(0, 0, 0), new LocalTime(0, 0, 0)));
+			// Registra feriado no período das 00:00 até as 12:00, trabalhando o restante do expediente normalmente
+			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalTime(0, 0, 0), new LocalTime(12, 0, 0)));
+			// Registra feriado para todo o dia 06/01
+			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 6, 0, 0, 0), new LocalTime(0, 0, 0), new LocalTime(23, 59, 0)));
 
 			tabela =
 					new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), new List<WorkingDaySlice>(), exceptions, new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalDateTime(2000,
@@ -209,8 +216,8 @@ namespace enki.tests.libs.date {
 			Assert.AreEqual(new LocalDateTime(2000, 1, 3, 0, 0, 0, 0), tabela.addWorkingHours(new LocalDateTime(2000, 1, 3, 0, 0, 0, 0), 0, 0));
 
 			SortedSet<WorkingDaySlice> exceptions = new SortedSet<WorkingDaySlice>();
-			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalTime(12, 0, 0), new LocalTime(16, 0, 0)));
-			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 6, 0, 0, 0), new LocalTime(0, 0, 0), new LocalTime(0, 0, 0)));
+			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalTime(0, 0, 0), new LocalTime(12, 0, 0)));
+			exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 6, 0, 0, 0), new LocalTime(0, 0, 0), new LocalTime(23, 59, 0)));
 
 			tabela = new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), new List<WorkingDaySlice>(), exceptions, new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalDateTime(2000, 1, 4, 0, 0, 0));
 			Assert.AreEqual(new LocalDateTime(2000, 1, 10, 8, 1, 0, 0), tabela.addWorkingHours(new LocalDateTime(2000, 1, 1, 0, 0, 0, 0), 28, 1));
@@ -295,7 +302,6 @@ namespace enki.tests.libs.date {
 			WorkingWeek workingWeek = ComplexWorkingWeek.getWeek8x7In2Periodos();
 			List<WorkingDaySlice> recurrentExceptions = new List<WorkingDaySlice> {
 				new SimpleWorkingDay(new DateTime(2011,12,29),h_0000,h_2400),
-				new SimpleWorkingDay(new DateTime(2012,12,29),h_0000,h_2400),
 				new SimpleWorkingDay(new DateTime(2012,12,30),h_0000,h_2400),
 				new SimpleWorkingDay(new DateTime(2012,12,31),h_0000,h_2400),
 				new SimpleWorkingDay(new DateTime(2013,1,1),h_0000,h_2400),
@@ -314,7 +320,7 @@ namespace enki.tests.libs.date {
 			};
 			tabela = new WorkingHoursTable(workingWeek, recurrentExceptions,
 				new SortedSet<WorkingDaySlice>(), new LocalDateTime(2012, 12, 28, 0, 0, 0), new LocalDateTime(2013, 1, 3, 0, 0, 0));
-			Assert.AreEqual(workDay * 3, tabela.getWorkingMinutesBetween(new DateTime(2012, 12, 28, 0, 0, 0, 0), new DateTime(2013, 1, 2, 23, 59, 59, 0)));
+			Assert.AreEqual(workDay * 3, tabela.getWorkingMinutesBetween(new DateTime(2012, 12, 28, 0, 0, 0, 0), new DateTime(2013, 1, 3, 23, 59, 59, 0)));
 
 			recurrentExceptions = new List<WorkingDaySlice> {
 				new SimpleWorkingDay(new DateTime(2012,12,28),h_0000,h_2400),
@@ -329,7 +335,6 @@ namespace enki.tests.libs.date {
 			Assert.AreEqual(workDay * 0, tabela.getWorkingMinutesBetween(new DateTime(2012, 12, 28, 0, 0, 0, 0), new DateTime(2013, 1, 2, 23, 59, 59, 0)));
 
 			recurrentExceptions = new List<WorkingDaySlice> {
-				new SimpleWorkingDay(new DateTime(2011,12,29),h_1300,h_1800),
 				new SimpleWorkingDay(new DateTime(2012,12,28),h_0000,h_1200),
 				new SimpleWorkingDay(new DateTime(2012,12,30),h_0000,h_2400),
 				new SimpleWorkingDay(new DateTime(2012,12,31),h_0000,h_2400),
@@ -340,6 +345,7 @@ namespace enki.tests.libs.date {
 				new SortedSet<WorkingDaySlice>(), new LocalDateTime(2012, 12, 28, 0, 0, 0), new LocalDateTime(2013, 1, 2, 0, 0, 0));
 			Assert.AreEqual(workDay + (h * 5), tabela.getWorkingMinutesBetween(new DateTime(2012, 12, 28, 0, 0, 0, 0), new DateTime(2013, 1, 2, 23, 59, 59, 0)));
 
+			// Como os feriados são recorrentes, todo o período é desconsiderado no cálculo.
 			recurrentExceptions = new List<WorkingDaySlice> {
 				new SimpleWorkingDay(new DateTime(2011,12,28),h_0000,h_2400),
 				new SimpleWorkingDay(new DateTime(2011,12,29),h_0000,h_2400),
@@ -350,7 +356,7 @@ namespace enki.tests.libs.date {
 			};
 			tabela = new WorkingHoursTable(workingWeek, recurrentExceptions,
 				new SortedSet<WorkingDaySlice>(), new LocalDateTime(2012, 12, 28, 0, 0, 0), new LocalDateTime(2013, 1, 2, 0, 0, 0));
-			Assert.AreEqual(workDay * 2, tabela.getWorkingMinutesBetween(new DateTime(2012, 12, 28, 0, 0, 0, 0), new DateTime(2013, 1, 2, 23, 59, 59, 0)));
+			Assert.AreEqual(0, tabela.getWorkingMinutesBetween(new DateTime(2012, 12, 28, 0, 0, 0, 0), new DateTime(2013, 1, 2, 23, 59, 59, 0)));
 		}
 
 		[TestMethod]
