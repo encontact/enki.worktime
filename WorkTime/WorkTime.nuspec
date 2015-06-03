@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+    <licenseUrl>https://bitbucket.org/encontact/enki.worktime</licenseUrl>
+    <projectUrl>https://bitbucket.org/encontact/enki.worktime</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>$description$</description>
+    <releaseNotes>Primeira versão do sistema.</releaseNotes>
+    <copyright>Copyright 2015</copyright>
+    <tags>Auxiliar HorasUteis HorasTrabalhadas WorkingTime</tags>
+  </metadata>
+</package>
