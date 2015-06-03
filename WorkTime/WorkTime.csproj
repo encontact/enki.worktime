@@ -38,9 +38,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="NodaTime">
-      <HintPath>..\..\libs\NodaTime.dll</HintPath>
+      <HintPath>..\lib\NodaTime.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
