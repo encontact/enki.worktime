@@ -5,10 +5,10 @@ using System.Runtime.CompilerServices;
 // Change them to the values specific to your project.
 
 [assembly: AssemblyTitle("WorkTime")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Worktime lib for calc working hours.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Enki Consultoria e Desenvolvimento")]
-[assembly: AssemblyProduct("")]
+[assembly: AssemblyCompany("Enkilabs")]
+[assembly: AssemblyProduct("Enki.Worktime")]
 [assembly: AssemblyCopyright("Enki@2012")]
 [assembly: AssemblyTrademark("Enki")]
 [assembly: AssemblyCulture("")]
