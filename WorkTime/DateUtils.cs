@@ -1,11 +1,4 @@
 using NodaTime;
-using NodaTime.Globalization;
-using NodaTime.Calendars;
-using NodaTime.Fields;
-using NodaTime.Properties;
-using NodaTime.Text;
-using NodaTime.TimeZones;
-using NodaTime.Utility;
 using System;
 
 namespace enki.libs.workhours
@@ -13,7 +6,8 @@ namespace enki.libs.workhours
     /// <summary>
     /// Classe utilitaria para apoio ao cálculo de horas úteis
     /// </summary>
-    public class DateUtils {
+    public class DateUtils
+    {
         private static readonly double M_0_25 = 0.25;
 
         private static readonly double M_0_5 = 0.5;
@@ -81,7 +75,8 @@ namespace enki.libs.workhours
         /// <summary>
         /// Construtor privado da classe
         /// </summary>
-        private DateUtils() {
+        private DateUtils()
+        {
         }
 
         /// <summary>
@@ -89,27 +84,32 @@ namespace enki.libs.workhours
         /// </summary>
         /// <param name="julianDate">Dia Juliano</param>
         /// <returns>LocalDateTime referente a data convertida</returns>
-        public static LocalDateTime fromMJD(int julianDate) {
+        public static LocalDateTime fromMJD(int julianDate)
+        {
             int ja = (int)(julianDate + MODIFIED_JULIAN_DATE_OFFSET + M_0_5);
-            if (ja >= JGREG) {
-                int jalpha = (int) ((ja - M_1867216 - M_0_25) / M_36524_25);
+            if (ja >= JGREG)
+            {
+                int jalpha = (int)((ja - M_1867216 - M_0_25) / M_36524_25);
                 ja = ja + 1 + jalpha - jalpha / M_4;
             }
 
             int jb = ja + M_1524;
-            int jc = (int) (M_6680_0 + (jb - M_2439870 - M_122_1) / JULIAN_YEAR_LEN);
+            int jc = (int)(M_6680_0 + (jb - M_2439870 - M_122_1) / JULIAN_YEAR_LEN);
             int jd = DAYS_PER_YEAR * jc + jc / M_4;
-            int je = (int) ((jb - jd) / M_30_6001);
-            int day = jb - jd - (int) (M_30_6001 * je);
+            int je = (int)((jb - jd) / M_30_6001);
+            int day = jb - jd - (int)(M_30_6001 * je);
             int month = je - 1;
-            if (month > MONTHS_PER_YEAR) {
+            if (month > MONTHS_PER_YEAR)
+            {
                 month = month - MONTHS_PER_YEAR;
             }
             int year = jc - M_4715;
-            if (month > 2) {
+            if (month > 2)
+            {
                 year--;
             }
-            if (year <= 0) {
+            if (year <= 0)
+            {
                 year--;
             }
 
@@ -126,7 +126,8 @@ namespace enki.libs.workhours
         /// <param name="minute">Minuto</param>
         /// <param name="second">Segundo</param>
         /// <returns>Data convertida em formato Juliano (Midified Julian Date)</returns>
-        private static int toMJD(int year, int month, int day, int hour, int minute, int second) {
+        private static int toMJD(int year, int month, int day, int hour, int minute, int second)
+        {
             int a = (MONTH_OFFSET - month) / MONTHS_PER_YEAR;
             int y = year + M_4800 - a;
             int m = month + MONTHS_PER_YEAR * a - M_3;
@@ -134,7 +135,7 @@ namespace enki.libs.workhours
             int jdn = day + (M_153 * m + 2) / M_5 + DAYS_PER_YEAR * y + y / M_4 - y / M_100 + y / M_400 - M_32045;
             int jd = jdn + (hour - HALF_A_DAY) / HOURS_PER_DAY + minute / MINUTES_PER_DAY + second / SECONDS_PER_DAY;
 
-            int result = (int) (jd - MODIFIED_JULIAN_DATE_OFFSET);
+            int result = (int)(jd - MODIFIED_JULIAN_DATE_OFFSET);
 
             return result;
         }
@@ -144,7 +145,8 @@ namespace enki.libs.workhours
         /// </summary>
         /// <param name="date">Data no formato NodaTime.LocalDateTime</param>
         /// <returns>Data convertida em formato Juliano (Midified Julian Date)</returns>
-        public static int toMJD(LocalDateTime date) {
+        public static int toMJD(LocalDateTime date)
+        {
             int day = date.Day;
             int month = date.Month;
             int year = date.Year;

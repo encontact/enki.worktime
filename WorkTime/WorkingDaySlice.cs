@@ -1,14 +1,13 @@
-using System;
-
 using NodaTime;
+using System;
 
 namespace enki.libs.workhours
 {
     /// <summary>
     /// Interface padrão que representa um dia de trabalho
     /// </summary>
-    public interface WorkingDaySlice : IComparable<WorkingDaySlice> {
-
+    public interface WorkingDaySlice : IComparable<WorkingDaySlice>
+    {
         /// <summary>
         /// Dia a ser contabilizado.
         /// </summary>

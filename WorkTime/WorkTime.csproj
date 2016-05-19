@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="DateUtils.cs" />
+    <Compile Include="IWorkingPeriod.cs" />
     <Compile Include="RecurrentExceptionsBucket.cs" />
     <Compile Include="SimpleWorkingDay.cs" />
     <Compile Include="WorkingHoursTable.cs" />
