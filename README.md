@@ -1,7 +1,11 @@
 Enki.WorkTime
 ========
 
+**Portuguese:**
 Documentação do componente de processamento de horas úteis.
+
+**English:**
+Documentation about lib to calc business days.
 
 Sumário
 ========================================
