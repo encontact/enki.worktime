@@ -144,7 +144,7 @@ namespace enki.libs.workhours
         /// <returns>
         /// Semana 8x7 em 2 periodos.
         /// </returns>
-        public static WorkingWeek getWeek8x7In2Periodos()
+        public static WorkingWeek getWeek8x7In2Periods()
         {
             ComplexWorkingWeek workingWeek = new ComplexWorkingWeek();
             workingWeek.setWorkDay((int)IsoDayOfWeek.Monday, HOURS_9, HOURS_12);
@@ -178,7 +178,7 @@ namespace enki.libs.workhours
         /// <returns>
         /// Semana 8x7 em 2 periodos.
         /// </returns>
-        public static WorkingWeek GetWeek8X5In2Periodos()
+        public static WorkingWeek GetWeek8X5In2Periods()
         {
             ComplexWorkingWeek workingWeek = new ComplexWorkingWeek();
             workingWeek.setWorkDay((int)IsoDayOfWeek.Monday, HOURS_9, HOURS_12);
@@ -203,5 +203,37 @@ namespace enki.libs.workhours
             return workingWeek;
         }
 
+        /// <summary>
+        /// Recupera uma semana de trabalho com dois periodos por dia, com 8 horas de trabalho por
+        /// dia separados nos periodos: 9 as 12 e 13 as 18 e 
+        /// Final de semana Sabado e Domingo das 09 as 12
+        /// </summary>
+        /// <returns>
+        /// Semana 8x7 em 2 periodos + final semana 1 periodo.
+        /// </returns>
+        public static WorkingWeek GetWeek8X5In2PeriodsAndHalfWeekend()
+        {
+            ComplexWorkingWeek workingWeek = new ComplexWorkingWeek();
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Monday, HOURS_9, HOURS_12);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Monday, HOURS_13, HOURS_18);
+
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Tuesday, HOURS_9, HOURS_12);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Tuesday, HOURS_13, HOURS_18);
+
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Wednesday, HOURS_9, HOURS_12);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Wednesday, HOURS_13, HOURS_18);
+
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Thursday, HOURS_9, HOURS_12);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Thursday, HOURS_13, HOURS_18);
+
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Friday, HOURS_9, HOURS_12);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Friday, HOURS_13, HOURS_18);
+
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Saturday, HOURS_9, HOURS_12);
+
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Sunday, HOURS_9, HOURS_12);
+
+            return workingWeek;
+        }
     }
 }

@@ -383,7 +383,24 @@ namespace enki.libs.workhours
             // Recupera a data onde serao inseridos os minutos uteis
             LocalDateTime resultedDate = DateUtils.fromMJD(day + mjdTableStart - 1);
             // Calcula os minutos uteis a serem adicionados
-            int minutesToAdd = (int)(totalMinutes - delta + workDay[day].getMinStartDayPart()); //this.workStart[day]);
+            int minutesToAdd = (int)(totalMinutes - delta + workDay[day].getMinStartDayPart());
+            minutesToAdd += GetPeriodIntervalMinutesToAdd(day, minutesToAdd);
+
+            // Recupera a data com a soma corrida dos minutos necessários
+            DateTime result = new DateTime(resultedDate.Year, resultedDate.Month, resultedDate.Day, MIDNIGHT.Hour, MIDNIGHT.Minute, MIDNIGHT.Second).AddMinutes(minutesToAdd);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Recupera os minutos existentes entre as horas úteis para ser contabilizado no tempo total.
+        /// </summary>
+        /// <param name="day">Dia da semana para cálculo</param>
+        /// <param name="minutesToAdd">Minutos calculados para verificar se caiu contém intervalo a ser adicionado.</param>
+        /// <returns>Número de minutos a ser creditado no tempo total calculado.</returns>
+        private int GetPeriodIntervalMinutesToAdd(int day, int minutesToAdd)
+        {
+            var resultToAdd = 0;
 
             // Conta minutos dos intervalos entre os períodos e adiciona ao valor de minutos a serem adicionados.
             short endMinutesPreviousSlice = 0;
@@ -391,15 +408,16 @@ namespace enki.libs.workhours
             {
                 if (endMinutesPreviousSlice != 0 && minutesToAdd > endMinutesPreviousSlice && minutesToAdd > daySlice.getDayStart())
                 {
-                    minutesToAdd += daySlice.getDayStart() - endMinutesPreviousSlice;
+                    resultToAdd += daySlice.getDayStart() - endMinutesPreviousSlice;
+                }
+                else if (minutesToAdd > endMinutesPreviousSlice && minutesToAdd <= daySlice.getDayStart())
+                {
+                    resultToAdd += daySlice.getDayStart() - endMinutesPreviousSlice;
                 }
                 endMinutesPreviousSlice = daySlice.getDayEnd();
             }
 
-            // Recupera a data com a soma corrida dos minutos necessários
-            DateTime result = new DateTime(resultedDate.Year, resultedDate.Month, resultedDate.Day, MIDNIGHT.Hour, MIDNIGHT.Minute, MIDNIGHT.Second).AddMinutes(minutesToAdd);
-
-            return result;
+            return resultToAdd;
         }
 
         /// <summary>

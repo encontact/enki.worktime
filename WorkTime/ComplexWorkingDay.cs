@@ -92,27 +92,20 @@ namespace enki.libs.workhours
         /// </returns>
         public short getMinStartDayPart()
         {
-            try
+            if (this.dayParts.Count == 0)
             {
-                if (this.dayParts.Count == 0)
-                {
-                    return 0;
-                }
-                short minValue = short.MaxValue;
-                foreach (SimpleWorkingDay item in this.dayParts)
-                {
-                    short value = item.getDayStart();
-                    if (value < minValue)
-                    {
-                        minValue = value;
-                    }
-                }
-                return minValue;
+                return 0;
             }
-            catch (Exception e)
+            short minValue = short.MaxValue;
+            foreach (SimpleWorkingDay item in this.dayParts)
             {
-                throw e;
+                short value = item.getDayStart();
+                if (value < minValue)
+                {
+                    minValue = value;
+                }
             }
+            return minValue;
         }
 
         /// <summary>

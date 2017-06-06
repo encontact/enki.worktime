@@ -74,13 +74,13 @@ namespace WorkTime.Tests
                 recurrentBucket.GetPeriod(new NodaTime.LocalDateTime(2005, 10, 05, 0, 0));
                 Assert.Fail();
             }
-            catch (KeyNotFoundException ke)
+            catch (KeyNotFoundException)
             {
                 Assert.IsTrue(true);
             }
             catch (Exception e)
             {
-                Assert.Fail();
+                Assert.Fail(e.Message);
             }
         }
     }
