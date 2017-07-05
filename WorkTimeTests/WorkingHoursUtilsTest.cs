@@ -508,7 +508,7 @@ namespace enki.tests.libs.date
             var daysOnPeriod = Convert.ToInt32((endPeriod - startPeriod).TotalDays);
             for (int day = 1; day <= daysOnPeriod; day++)
             {
-                var workDaySlice = new SimpleWorkingDay(new DateTime(2016,01,day), (short)(0 + (0 * 60)), (short)(59 + (24 * 60)));
+                var workDaySlice = new SimpleWorkingDay(new DateTime(2016, 01, day), (short)(0 + (0 * 60)), (short)(59 + (24 * 60)));
                 exceptions.Add(workDaySlice);
             }
 
@@ -582,13 +582,13 @@ namespace enki.tests.libs.date
             var result = workingTable.addWorkingHours(date, hours, minutes);
             var expectedResult = new DateTime(2017, 06, 05, 12, 00, 00);
             Assert.AreEqual(expectedResult, result);
-            
+
             // Inicia no meio do período de intervalo e todo intervalo deve ser descartado no calculo.
             var dateStartInInterval = new DateTime(2017, 06, 02, 12, 30, 0);
             var resultStartInInterval = workingTable.addWorkingHours(dateStartInInterval, hours, minutes);
             var expectedResultStartInInterval = new DateTime(2017, 06, 05, 15, 00, 00);
             Assert.AreEqual(expectedResultStartInInterval, resultStartInInterval);
-            
+
             // Inicia no meio do período de intervalo e todo intervalo deve ser descartado no calculo.
             var dateStartWeekend = new DateTime(2017, 06, 04, 00, 00, 0);
             var resultStartWeekend = workingTable.addWorkingHours(dateStartWeekend, hours, minutes);
@@ -646,5 +646,76 @@ namespace enki.tests.libs.date
             Assert.AreEqual(expectedResultWeekend, resultWeekend);
         }
 
+        [TestMethod]
+        public void testAddWorkingHoursSingleRecurrentHoliday()
+        {
+            LocalTime MIDNIGHT = new LocalTime(0, 0, 0);
+            LocalTime NINE = new LocalTime(9, 0, 0);
+            LocalTime EIGHTEEN = new LocalTime(18, 00, 0);
+            LocalTime TWENT_THREE = new LocalTime(23, 59, 0);
+            var workingWeek = new ComplexWorkingWeek();
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Monday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Tuesday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Wednesday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Thursday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Friday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Saturday, MIDNIGHT, MIDNIGHT);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Sunday, NINE, EIGHTEEN);
+
+            var exceptions = new List<WorkingDaySlice>();
+            var workDaySlice = new SimpleWorkingDay(new DateTime(2017, 06, 18), (short)(0 + (0 * 60)), (short)(59 + (23 * 60)));
+            exceptions.Add(workDaySlice);
+
+            var workingTable = new WorkingHoursTable(
+                workingWeek,
+                exceptions,
+                new SortedSet<WorkingDaySlice>(),
+                new LocalDateTime(2017, 06, 18, 15, 00),
+                new LocalDateTime(2017, 06, 18, 16, 59, 59)
+            );
+
+            var date = new DateTime(2017, 06, 18, 15, 44, 08);
+            var hours = 0;
+            var minutes = 25;
+            var result = workingTable.addWorkingHours(date, hours, minutes);
+            var expectedResult = new DateTime(2017, 06, 19, 00, 25, 00);
+            Assert.AreEqual(expectedResult, result);
+        }
+
+        [TestMethod]
+        public void testAddWorkingHoursSingleDayHoliday()
+        {
+            LocalTime MIDNIGHT = new LocalTime(0, 0, 0);
+            LocalTime NINE = new LocalTime(9, 0, 0);
+            LocalTime EIGHTEEN = new LocalTime(18, 00, 0);
+            LocalTime TWENT_THREE = new LocalTime(23, 59, 0);
+            var workingWeek = new ComplexWorkingWeek();
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Monday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Tuesday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Wednesday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Thursday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Friday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Saturday, MIDNIGHT, MIDNIGHT);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Sunday, NINE, EIGHTEEN);
+            
+            var exceptions = new SortedSet<WorkingDaySlice>();
+            var workDaySlice = new SimpleWorkingDay(new DateTime(2017, 06, 18), (short)(0 + (0 * 60)), (short)(59 + (23 * 60)));
+            exceptions.Add(workDaySlice);
+
+            var workingTable = new WorkingHoursTable(
+                workingWeek,
+                new List<WorkingDaySlice>(),
+                exceptions,
+                new LocalDateTime(2017, 06, 18, 15, 00),
+                new LocalDateTime(2017, 06, 18, 16, 59, 59)
+            );
+
+            var date = new DateTime(2017, 06, 18, 15, 44, 08);
+            var hours = 0;
+            var minutes = 25;
+            var result = workingTable.addWorkingHours(date, hours, minutes);
+            var expectedResult = new DateTime(2017, 06, 19, 00, 25, 00);
+            Assert.AreEqual(expectedResult, result);
+        }
     }
 }

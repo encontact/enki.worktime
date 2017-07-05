@@ -191,13 +191,13 @@ namespace enki.libs.workhours
         /// <param name="currentDate">dia a ser preenchido.</param>
         private void fillStartEndTime(int dayIndex, LocalDateTime currentDate)
         {
-            while (nextException != null && nextException.getDate().CompareTo(currentDate) < 0)
+            while (nextException != null && nextException.getDate().Date.CompareTo(currentDate.Date) < 0)
             {
                 exceptionsIt.MoveNext();
                 nextException = exceptionsIt.Current;
             }
             int day = getLeapSafeDayOfYear(currentDate);
-            if (nextException != null && nextException.getDate().Equals(currentDate))
+            if (nextException != null && nextException.getDate().Date.Equals(currentDate.Date))
             {
                 // exceções
                 workDay[dayIndex] = workDay[dayIndex] == null ? new ComplexWorkingDay() : workDay[dayIndex];
