@@ -1,7 +1,7 @@
 using enki.libs.workhours;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NodaTime;
 using System;
+using Xunit;
 
 namespace enki.tests.libs.date
 {
@@ -42,34 +42,34 @@ namespace enki.tests.libs.date
                         new LocalDateTime(2044, 8, 4, 0, 0, 0), new LocalDateTime(1993, 2, 16, 0, 0, 0), new LocalDateTime(1944, 10, 11, 0, 0, 0), new LocalDateTime(2031, 9, 15, 0, 0, 0),
                         new LocalDateTime(1987, 7, 12, 0, 0, 0), new LocalDateTime(1927, 5, 6, 0, 0, 0), new LocalDateTime(1927, 9, 11, 0, 0, 0), new LocalDateTime(2025, 9, 16, 0, 0, 0) };
 
-        [TestMethod]
+        [Fact]
         public void testConversionToMJD()
         {
             for (int i = 0; i < this.MJD.Length; i++)
             {
-                Assert.AreEqual(this.MJD[i], DateUtils.toMJD(this.DATES[i]));
+                Assert.Equal(this.MJD[i], DateUtils.toMJD(this.DATES[i]));
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void testConversionFromMJD()
         {
             for (int i = 0; i < this.MJD.Length; i++)
             {
-                Assert.AreEqual(this.DATES[i], DateUtils.fromMJD(this.MJD[i]));
+                Assert.Equal(this.DATES[i], DateUtils.fromMJD(this.MJD[i]));
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void testMJD()
         {
             for (int i = 0; i < 100000; i += 73)
             {
-                Assert.AreEqual(i, DateUtils.toMJD(DateUtils.fromMJD(i)));
+                Assert.Equal(i, DateUtils.toMJD(DateUtils.fromMJD(i)));
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void testPeriod()
         {
             LocalTime MIDNIGHT = new LocalTime(0, 0, 0);
@@ -77,15 +77,15 @@ namespace enki.tests.libs.date
 
             long minutes = Period.Between(MIDNIGHT, EIGHT_MORNING, PeriodUnits.Minutes).Minutes;
 
-            Assert.AreEqual(480, minutes);
+            Assert.Equal(480, minutes);
         }
 
-        [TestMethod]
+        [Fact]
         public void testLocalDateTimeParse()
         {
             LocalDateTime correctValue = new LocalDateTime(2001, 01, 01, 15, 12, CalendarSystem.Iso);
-            LocalDateTime wrongValue = LocalDateTime.Parse(new DateTime(2001, 1, 1, 15, 12, 00).ToString());
-            Assert.AreEqual(correctValue, wrongValue);
+            LocalDateTime wrongValue = DateUtils.ToLocalDateTime(new DateTime(2001, 1, 1, 15, 12, 00));
+            Assert.Equal(correctValue, wrongValue);
         }
     }
 }

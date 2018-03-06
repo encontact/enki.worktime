@@ -46,7 +46,7 @@ namespace enki.libs.workhours
         /// <param name="start">data inicial</param>
         /// <param name="end">data final</param>
         public WorkingHoursTable(WorkingWeek workingWeek, DateTime start, DateTime end)
-            : this(workingWeek, LocalDateTime.Parse(start.ToString()), LocalDateTime.Parse(end.ToString()))
+            : this(workingWeek, DateUtils.ToLocalDateTime(start), DateUtils.ToLocalDateTime(end))
         {
         }
 
@@ -201,7 +201,7 @@ namespace enki.libs.workhours
             {
                 // exceções
                 workDay[dayIndex] = workDay[dayIndex] == null ? new ComplexWorkingDay() : workDay[dayIndex];
-                var periods = GetExceptionDaySlices(nextException.getDayStart(), nextException.getDayEnd(), workingWeek.getPeriods((int)currentDate.IsoDayOfWeek));
+                var periods = GetExceptionDaySlices(nextException.getDayStart(), nextException.getDayEnd(), workingWeek.getPeriods((int)currentDate.DayOfWeek));
                 foreach (var period in periods)
                 {
                     workDay[dayIndex].addDayPart(new SimpleWorkingDay(
@@ -215,7 +215,7 @@ namespace enki.libs.workhours
                 // exceções recorrentes
                 workDay[dayIndex] = workDay[dayIndex] == null ? new ComplexWorkingDay() : workDay[dayIndex];
                 var time = RecurrentExceptions.GetPeriod(currentDate);
-                var periods = GetExceptionDaySlices(time.Item1, time.Item2, workingWeek.getPeriods((int)currentDate.IsoDayOfWeek));
+                var periods = GetExceptionDaySlices(time.Item1, time.Item2, workingWeek.getPeriods((int)currentDate.DayOfWeek));
                 foreach (var period in periods)
                 {
                     workDay[dayIndex].addDayPart(new SimpleWorkingDay(
@@ -227,7 +227,7 @@ namespace enki.libs.workhours
             {
                 // dias normais
                 workDay[dayIndex] = workDay[dayIndex] == null ? new ComplexWorkingDay() : workDay[dayIndex];
-                foreach (WorkingPeriod slice in workingWeek.getPeriods((int)currentDate.IsoDayOfWeek))
+                foreach (WorkingPeriod slice in workingWeek.getPeriods((int)currentDate.DayOfWeek))
                 {
                     workDay[dayIndex].addDayPart(new SimpleWorkingDay(
                         currentDate.ToDateTimeUnspecified(),
@@ -314,11 +314,11 @@ namespace enki.libs.workhours
             // Extende a tabela para cima ou para baixo se necessario
             if (endIndex >= workDay.Length || startIndex >= workDay.Length)
             {
-                expandTableEnd(end.CompareTo(start) > 0 ? LocalDateTime.Parse(end.ToString()) : LocalDateTime.Parse(start.ToString()));
+                expandTableEnd(end.CompareTo(start) > 0 ? DateUtils.ToLocalDateTime(end) : DateUtils.ToLocalDateTime(start));
             }
             if (startIndex < 1 || endIndex < 1)
             {
-                expandTableStart(end.CompareTo(start) < 0 ? LocalDateTime.Parse(end.ToString()) : LocalDateTime.Parse(start.ToString()));
+                expandTableStart(end.CompareTo(start) < 0 ? DateUtils.ToLocalDateTime(end) : DateUtils.ToLocalDateTime(start));
                 endIndex = DateUtils.toMJD(end) - mjdTableStart + 1;
                 startIndex = DateUtils.toMJD(start) - DateUtils.toMJD(tableStart) + 1;
             }
@@ -358,7 +358,7 @@ namespace enki.libs.workhours
             // Verifica se deve expandir o inicio da tabela.
             if (original.CompareTo(DateTime.Parse(tableStart.ToString())) < 0)
             {
-                expandTableStart(LocalDateTime.Parse(original.ToString()));
+                expandTableStart(DateUtils.ToLocalDateTime(original));
             }
             // Recupera os minutos totais a serem adicionados
             int totalMinutes = minutes + (hours * MINS_PER_HOUR);

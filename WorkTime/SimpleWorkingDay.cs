@@ -29,7 +29,7 @@ namespace enki.libs.workhours
         /// Final do dia, contato em minutos a partir das 0h do dia.
         /// </param>
         public SimpleWorkingDay(DateTime date, short dayStart, short dayEnd)
-            : this(LocalDateTime.Parse(date.ToString()), dayStart, dayEnd)
+            : this(DateUtils.ToLocalDateTime(date), dayStart, dayEnd)
         {
         }
 

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.30723.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkTime", "WorkTime\WorkTime.csproj", "{DE490EEC-58C7-40AA-B9F5-402DDDE5A3BC}"
 EndProject
@@ -18,16 +18,19 @@ Global
 		{DE490EEC-58C7-40AA-B9F5-402DDDE5A3BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE490EEC-58C7-40AA-B9F5-402DDDE5A3BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DE490EEC-58C7-40AA-B9F5-402DDDE5A3BC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DE490EEC-58C7-40AA-B9F5-402DDDE5A3BC}.Teste|Any CPU.ActiveCfg = Teste|Any CPU
-		{DE490EEC-58C7-40AA-B9F5-402DDDE5A3BC}.Teste|Any CPU.Build.0 = Teste|Any CPU
+		{DE490EEC-58C7-40AA-B9F5-402DDDE5A3BC}.Teste|Any CPU.ActiveCfg = Release|Any CPU
+		{DE490EEC-58C7-40AA-B9F5-402DDDE5A3BC}.Teste|Any CPU.Build.0 = Release|Any CPU
 		{DE504285-1A3F-480D-9363-192B1CFD7955}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DE504285-1A3F-480D-9363-192B1CFD7955}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE504285-1A3F-480D-9363-192B1CFD7955}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DE504285-1A3F-480D-9363-192B1CFD7955}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DE504285-1A3F-480D-9363-192B1CFD7955}.Teste|Any CPU.ActiveCfg = Teste|Any CPU
-		{DE504285-1A3F-480D-9363-192B1CFD7955}.Teste|Any CPU.Build.0 = Teste|Any CPU
+		{DE504285-1A3F-480D-9363-192B1CFD7955}.Teste|Any CPU.ActiveCfg = Release|Any CPU
+		{DE504285-1A3F-480D-9363-192B1CFD7955}.Teste|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {81989BDC-D071-46B2-9F71-3316664034B4}
 	EndGlobalSection
 EndGlobal

@@ -6,7 +6,7 @@ namespace enki.libs.workhours
     /// <summary>
     /// Classe utilitaria para apoio ao cálculo de horas úteis
     /// </summary>
-    public class DateUtils
+    public static class DateUtils
     {
         private static readonly double M_0_25 = 0.25;
 
@@ -73,10 +73,13 @@ namespace enki.libs.workhours
         private static readonly int JGREG = M_15 + M_31 * (M_10 + MONTHS_PER_YEAR * M_1582);
 
         /// <summary>
-        /// Construtor privado da classe
+        /// Converte um DateTime normal para LocalDateTime do NodaTime.
         /// </summary>
-        private DateUtils()
+        /// <param name="dateTime">Objeto DateTime do C# para conversão.</param>
+        /// <returns>Objeto convertido.</returns>
+        public static LocalDateTime ToLocalDateTime(this DateTime dateTime)
         {
+            return new LocalDateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, dateTime.Minute, dateTime.Second, dateTime.Millisecond);
         }
 
         /// <summary>

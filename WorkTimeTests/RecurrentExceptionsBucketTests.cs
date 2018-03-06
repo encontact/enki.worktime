@@ -1,23 +1,12 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Xunit;
 
 namespace WorkTime.Tests
 {
-    [TestClass()]
     public class RecurrentExceptionsBucketTests
     {
-        [TestInitialize]
-        public void Setup()
-        {
-        }
-
-        [TestCleanup]
-        public void TearDown()
-        {
-        }
-
-        [TestMethod()]
+        [Fact]
         public void AddTest()
         {
             var date2000 = new NodaTime.LocalDateTime(2000, 01, 01, 0, 0);
@@ -30,21 +19,21 @@ namespace WorkTime.Tests
             }
             catch
             {
-                Assert.Fail();
+                Assert.True(false, "Fail to add recurrent exception.");
             }
 
             try
             {
                 recurrentBucket.Add(date2001, 0, 960);
-                Assert.Fail();
+                Assert.True(false, "Fail when accept invalid period.");
             }
             catch (Exception e)
             {
-                Assert.AreEqual("There is already an item to the date indicated in the list.", e.Message);
+                Assert.Equal("There is already an item to the date indicated in the list.", e.Message);
             }
         }
 
-        [TestMethod()]
+        [Fact]
         public void HasTest()
         {
             var date2000 = new NodaTime.LocalDateTime(2000, 01, 01, 0, 0);
@@ -53,12 +42,12 @@ namespace WorkTime.Tests
             var recurrentBucket = new RecurrentExceptionsBucket();
             recurrentBucket.Add(date2000, 480, 960);
 
-            Assert.IsTrue(recurrentBucket.Has(date2000));
-            Assert.IsTrue(recurrentBucket.Has(date2001));
-            Assert.IsFalse(recurrentBucket.Has(new NodaTime.LocalDateTime(2005, 10, 05, 0, 0)));
+            Assert.True(recurrentBucket.Has(date2000));
+            Assert.True(recurrentBucket.Has(date2001));
+            Assert.False(recurrentBucket.Has(new NodaTime.LocalDateTime(2005, 10, 05, 0, 0)));
         }
 
-        [TestMethod()]
+        [Fact]
         public void GetPeriodTest()
         {
             var date2000 = new NodaTime.LocalDateTime(2000, 01, 01, 0, 0);
@@ -67,20 +56,20 @@ namespace WorkTime.Tests
             var recurrentBucket = new RecurrentExceptionsBucket();
             recurrentBucket.Add(date2000, 480, 960);
 
-            Assert.AreEqual(new Tuple<short, short>(480, 960), recurrentBucket.GetPeriod(date2000));
-            Assert.AreEqual(new Tuple<short, short>(480, 960), recurrentBucket.GetPeriod(date2001));
+            Assert.Equal(new Tuple<short, short>(480, 960), recurrentBucket.GetPeriod(date2000));
+            Assert.Equal(new Tuple<short, short>(480, 960), recurrentBucket.GetPeriod(date2001));
             try
             {
                 recurrentBucket.GetPeriod(new NodaTime.LocalDateTime(2005, 10, 05, 0, 0));
-                Assert.Fail();
+                Assert.True(false, "Fail to get period.");
             }
             catch (KeyNotFoundException)
             {
-                Assert.IsTrue(true);
+                Assert.True(true);
             }
             catch (Exception e)
             {
-                Assert.Fail(e.Message);
+                Assert.True(false, e.Message);
             }
         }
     }
