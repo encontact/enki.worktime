@@ -1,3 +1,10 @@
+# Build data
 bin/
 obj/
+
+# User config
 *.suo
+.vs/
+
+# Cake Build
+tools/
