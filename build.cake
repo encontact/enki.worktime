@@ -63,6 +63,6 @@ Task("Push-Nuget-Package")
     }
 });
 
-Task("Default").IsDependentOn("Test");
+Task("Default").IsDependentOn("Create-Nuget-Package");
 
 RunTarget(target);
