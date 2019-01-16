@@ -1,6 +1,7 @@
 # Build data
 bin/
 obj/
+artifacts/
 
 # User config
 *.suo

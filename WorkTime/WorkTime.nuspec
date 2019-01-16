@@ -6,12 +6,12 @@
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
-    <licenseUrl>https://bitbucket.org/encontact/enki.worktime</licenseUrl>
-    <projectUrl>https://bitbucket.org/encontact/enki.worktime</projectUrl>
+    <licenseUrl>https://github.com/encontact/enki.worktime</licenseUrl>
+    <projectUrl>https://github.com/encontact/enki.worktime</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Primeira versão do sistema.</releaseNotes>
-    <copyright>Copyright 2015</copyright>
+    <releaseNotes>Update NodaTime version and DotNetCore compliance.</releaseNotes>
+    <copyright>Copyright 2019</copyright>
     <tags>Auxiliar HorasUteis HorasTrabalhadas WorkingTime</tags>
   </metadata>
 </package>

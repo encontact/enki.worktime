@@ -1,11 +1,18 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2036
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28407.52
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkTime", "WorkTime\WorkTime.csproj", "{DE490EEC-58C7-40AA-B9F5-402DDDE5A3BC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkTime", "WorkTime\WorkTime.csproj", "{DE490EEC-58C7-40AA-B9F5-402DDDE5A3BC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkTimeTests", "WorkTimeTests\WorkTimeTests.csproj", "{DE504285-1A3F-480D-9363-192B1CFD7955}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkTimeTests", "WorkTimeTests\WorkTimeTests.csproj", "{DE504285-1A3F-480D-9363-192B1CFD7955}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution", "Solution", "{212A1B6D-3CD2-4B48-BCFB-B5FDBB64BB8E}"
+	ProjectSection(SolutionItems) = preProject
+		appveyor.yml = appveyor.yml
+		build.cake = build.cake
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

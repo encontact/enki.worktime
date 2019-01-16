@@ -5,7 +5,7 @@ var artifactsDirectory = MakeAbsolute(Directory("./artifacts"));
 Task("Build")
 .Does(() =>
 {
-    foreach(var project in GetFiles("./src/**/*.csproj"))
+    foreach(var project in GetFiles("./WorkTime/**/*.csproj"))
     {
         DotNetCoreBuild(
             project.GetDirectory().FullPath, 
@@ -20,7 +20,7 @@ Task("Test")
 .IsDependentOn("Build")
 .Does(() =>
 {
-    foreach(var project in GetFiles("./tests/**/*.csproj"))
+    foreach(var project in GetFiles("./WorkTimeTests/**/*.csproj"))
     {
         DotNetCoreTest(
             project.GetDirectory().FullPath,
@@ -35,7 +35,7 @@ Task("Create-Nuget-Package")
 .IsDependentOn("Test")
 .Does(() =>
 {
-    foreach (var project in GetFiles("./src/**/*.csproj"))
+    foreach (var project in GetFiles("./WorkTime/**/*.csproj"))
     {
         DotNetCorePack(
             project.GetDirectory().FullPath,
@@ -52,15 +52,32 @@ Task("Push-Nuget-Package")
 .Does(() =>
 {
     var apiKey = EnvironmentVariable("NUGET_API");
-    
-    foreach (var package in GetFiles($"{artifactsDirectory}/*.nupkg"))
+	Information($"Utilizando a chave de API: {apiKey}");
+
+	var settings = new DotNetCoreNuGetPushSettings
     {
-        NuGetPush(package, 
-            new NuGetPushSettings {
-                Source = "https://www.nuget.org/api/v2/package",
-                ApiKey = apiKey
-            });
-    }
+		Source = "https://api.nuget.org/v3/index.json",
+		ApiKey = apiKey
+    };
+	DotNetCoreNuGetPush($"{artifactsDirectory}/WorkTime*.nupkg", settings);
+});
+
+Task("Only-Push-Nuget-Package")
+.Does(() =>
+{
+    var apiKey = EnvironmentVariable("NUGET_API");
+	Information($"Utilizando a chave de API: {apiKey}");
+    
+	var settings = new DotNetCoreNuGetPushSettings
+    {
+		Source = "https://api.nuget.org/v3/index.json",
+		ApiKey = apiKey
+    };
+	
+    foreach (var pack in GetFiles($"{artifactsDirectory}/*.nupkg"))
+    {
+		DotNetCoreNuGetPush($"{pack.FullPath}/WorkTime.1.1.0.nupkg", settings);
+	}
 });
 
 Task("Default").IsDependentOn("Create-Nuget-Package");
