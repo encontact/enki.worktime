@@ -78,7 +78,7 @@ namespace enki.libs.workhours
         public void setWorkDay(int dayOfWeek, LocalTime start, LocalTime end)
         {
             if (dayOfWeek == (int)IsoDayOfWeek.None)
-                throw new ArgumentException($"The value {dayOfWeek} is not a valid day of week.");
+                throw new ArgumentException($"The value {dayOfWeek} is not a valid day of week.", nameof(dayOfWeek));
 
             dayPeriods = dayPeriods == null ? new List<WorkingPeriod>() : dayPeriods;
             dayPeriods.Add(new WorkingPeriod(dayOfWeek,
