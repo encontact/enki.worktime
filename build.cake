@@ -52,32 +52,15 @@ Task("Push-Nuget-Package")
 .Does(() =>
 {
     var apiKey = EnvironmentVariable("NUGET_API");
-	Information($"Utilizando a chave de API: {apiKey}");
-
-	var settings = new DotNetCoreNuGetPushSettings
-    {
-		Source = "https://api.nuget.org/v3/index.json",
-		ApiKey = apiKey
-    };
-	DotNetCoreNuGetPush($"{artifactsDirectory}/WorkTime*.nupkg", settings);
-});
-
-Task("Only-Push-Nuget-Package")
-.Does(() =>
-{
-    var apiKey = EnvironmentVariable("NUGET_API");
-	Information($"Utilizando a chave de API: {apiKey}");
     
-	var settings = new DotNetCoreNuGetPushSettings
+    foreach (var package in GetFiles($"{artifactsDirectory}/*.nupkg"))
     {
-		Source = "https://api.nuget.org/v3/index.json",
-		ApiKey = apiKey
-    };
-	
-    foreach (var pack in GetFiles($"{artifactsDirectory}/*.nupkg"))
-    {
-		DotNetCoreNuGetPush($"{pack.FullPath}/WorkTime.1.1.0.nupkg", settings);
-	}
+        NuGetPush(package, 
+            new NuGetPushSettings {
+                Source = "https://www.nuget.org/api/v2/package",
+                ApiKey = apiKey
+            });
+    }
 });
 
 Task("Default").IsDependentOn("Create-Nuget-Package");
