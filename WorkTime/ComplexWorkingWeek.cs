@@ -77,7 +77,7 @@ namespace enki.libs.workhours
         /// <param name="end">Horario de término em NodaTime.LocalTime</param>
         public void setWorkDay(int dayOfWeek, LocalTime start, LocalTime end)
         {
-            if (dayOfWeek == (int)IsoDayOfWeek.None)
+            if (dayOfWeek <= (int)IsoDayOfWeek.None || dayOfWeek > (int)IsoDayOfWeek.Sunday)
                 throw new ArgumentException($"The value {dayOfWeek} is not a valid day of week.", nameof(dayOfWeek));
 
             dayPeriods = dayPeriods == null ? new List<WorkingPeriod>() : dayPeriods;
