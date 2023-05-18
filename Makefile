@@ -40,7 +40,8 @@ push-pack:
 # Mais em: https://renatogroffe.medium.com/net-nuget-atualizando-packages-via-linha-de-comando-b0c6b596ed2
 # Para instalar dependência: dotnet tool install --global dotnet-outdated-tool
 update-dependencies:
-	dotnet-outdated -u:Prompt ${solution}
+	dotnet tool restore                                                                    
+	dotnet dotnet-outdated -u:Prompt ${solution}
 
 # Mais em: https://devblogs.microsoft.com/nuget/how-to-scan-nuget-packages-for-security-vulnerabilities/
 check-vulnerabilities:

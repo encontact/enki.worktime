@@ -433,14 +433,14 @@ namespace enki.tests.libs.date
             start = h_0900;
             end = h_1200;
             ret = WorkingHoursTable.GetExceptionDaySlices(start, end, workingPeriods);
-            Assert.Equal(1, ret.Count);
+            Assert.Single(ret);
             Assert.Equal(h_1300, ret[0].Item1);
             Assert.Equal(h_1800, ret[0].Item2);
 
             start = h_1300;
             end = h_1800;
             ret = WorkingHoursTable.GetExceptionDaySlices(start, end, workingPeriods);
-            Assert.Equal(1, ret.Count);
+            Assert.Single(ret);
             Assert.Equal(h_0900, ret[0].Item1);
             Assert.Equal(h_1200, ret[0].Item2);
 
