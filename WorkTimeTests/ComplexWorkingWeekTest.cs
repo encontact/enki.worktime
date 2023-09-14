@@ -42,5 +42,41 @@ namespace WorkTimeTests
 
             Assert.Throws<ArgumentException>("dayOfWeek", () => workingWeek.setWorkDay(invalidDayOfWeek, startLocalTime, endLocalTime));
         }
+
+        [Fact]
+        public void MultiDaysPeriodTest()
+        {
+            var startDay = (int)IsoDayOfWeek.Monday;
+            var startLocalTime = new LocalTime(8, 0);
+
+            var endDay = (int)IsoDayOfWeek.Friday;
+            var endLocalTime = new LocalTime(18, 0);
+
+            var workingWeek = new ComplexWorkingWeek();
+
+            workingWeek.setWorkPeriod(startDay, endDay, startLocalTime, endLocalTime);
+
+            Assert.True(workingWeek.getPeriods(startDay).Any());
+            Assert.True(workingWeek.getPeriods(endDay).Any());
+            Assert.Equal(5, workingWeek.getPeriods().Count);
+        }
+
+        [Fact]
+        public void SingleDayPeriodTest()
+        {
+            var startDay = (int)IsoDayOfWeek.Monday;
+            var startLocalTime = new LocalTime(8, 0);
+
+            var endDay = (int)IsoDayOfWeek.Monday;
+            var endLocalTime = new LocalTime(18, 0);
+
+            var workingWeek = new ComplexWorkingWeek();
+
+            workingWeek.setWorkPeriod(startDay, endDay, startLocalTime, endLocalTime);
+
+            Assert.True(workingWeek.getPeriods(startDay).Any());
+            Assert.True(workingWeek.getPeriods(endDay).Any());
+            Assert.Single(workingWeek.getPeriods());
+        }
     }
 }

@@ -31,6 +31,15 @@ namespace enki.libs.workhours
 
 
         /// <summary>
+        /// Recupera a lista de periodos da semana toda
+        /// </summary>
+        /// <returns>Número referente ao horário de inicio da semana de trabalho.</returns>
+        public List<WorkingPeriod> getPeriods()
+        {
+            return dayPeriods;
+        }
+
+        /// <summary>
         /// Recupera a lista de periodos de um dia da semana especifico
         /// </summary>
         /// <param name="dayOfWeek">Dia da semana.</param>
@@ -48,7 +57,7 @@ namespace enki.libs.workhours
         {
             var time = new TimeSpan();
 
-            foreach(var period in dayPeriods)
+            foreach (var period in dayPeriods)
             {
                 var diff = period.endPeriod - period.startPeriod;
 
@@ -84,6 +93,53 @@ namespace enki.libs.workhours
             dayPeriods.Add(new WorkingPeriod(dayOfWeek,
                                              (short)Period.Between(MIDNIGHT, start, PeriodUnits.Minutes).Minutes,
                                              (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes));
+        }
+
+        /// <summary>
+        /// Define os horários de inicio e término do trabalho para um periodo de N dias da semana.
+        /// </summary>
+        /// <param name="startDay">Dia da semana, definido em "DateTimeConstants"</param>
+        /// <param name="endDay">Dia da semana, definido em "DateTimeConstants"</param>
+        /// <param name="start">Horario de inicio em NodaTime.LocalTime</param>
+        /// <param name="end">Horario de término em NodaTime.LocalTime</param>
+        public void setWorkPeriod(int startDay, int endDay, LocalTime start, LocalTime end)
+        {
+            if (startDay <= (int)IsoDayOfWeek.None || startDay > (int)IsoDayOfWeek.Sunday)
+                throw new ArgumentException($"The value {startDay} is not a valid day of week.", nameof(startDay));
+            if (endDay <= (int)IsoDayOfWeek.None || endDay > (int)IsoDayOfWeek.Sunday)
+                throw new ArgumentException($"The value {endDay} is not a valid day of week.", nameof(endDay));
+
+
+            dayPeriods = dayPeriods == null ? new List<WorkingPeriod>() : dayPeriods;
+
+            if (endDay > startDay)
+            {
+
+                for (int currentDay = startDay; currentDay < endDay; currentDay++)
+                {
+                    if (currentDay == startDay)
+                    {
+                        dayPeriods.Add(new WorkingPeriod(startDay,
+                            (short)Period.Between(MIDNIGHT, start, PeriodUnits.Minutes).Minutes,
+                            (short)Period.Between(MIDNIGHT, HOURS_235959, PeriodUnits.Minutes).Minutes));
+                        continue;
+                    }
+
+                    dayPeriods.Add(new WorkingPeriod(currentDay,
+                        (short)Period.Between(MIDNIGHT, MIDNIGHT, PeriodUnits.Minutes).Minutes,
+                        (short)Period.Between(MIDNIGHT, HOURS_235959, PeriodUnits.Minutes).Minutes));
+                }
+
+                dayPeriods.Add(new WorkingPeriod(endDay,
+                    (short)Period.Between(MIDNIGHT, MIDNIGHT, PeriodUnits.Minutes).Minutes,
+                    (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes));
+            }
+            else
+            {
+                dayPeriods.Add(new WorkingPeriod(startDay,
+                    (short)Period.Between(MIDNIGHT, start, PeriodUnits.Minutes).Minutes,
+                    (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes));
+            }
         }
 
         /// <summary>
