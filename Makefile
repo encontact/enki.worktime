@@ -1,7 +1,6 @@
 # To learn makefiles: https://makefiletutorial.com/
 # On windows, use NMake: https://docs.microsoft.com/pt-br/cpp/build/reference/nmake-reference?view=msvc-160
 dotnetFramework = net6.0
-packFramework = netstandard2.0
 solution = ./enki.worktime.sln
 libProject = ./WorkTime/WorkTime.csproj
 nuspec = ./enki.worktime.nuspec
