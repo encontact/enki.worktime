@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using NodaTime;
 using enki.libs.workhours.domain;
 using System;
+using System.Linq;
 
 namespace enki.libs.workhours
 {
@@ -31,6 +32,15 @@ namespace enki.libs.workhours
 
 
         /// <summary>
+        /// Recupera a lista de periodos da semana toda
+        /// </summary>
+        /// <returns>Número referente ao horário de inicio da semana de trabalho.</returns>
+        public List<WorkingPeriod> getPeriods()
+        {
+            return dayPeriods;
+        }
+
+        /// <summary>
         /// Recupera a lista de periodos de um dia da semana especifico
         /// </summary>
         /// <param name="dayOfWeek">Dia da semana.</param>
@@ -48,7 +58,7 @@ namespace enki.libs.workhours
         {
             var time = new TimeSpan();
 
-            foreach(var period in dayPeriods)
+            foreach (var period in dayPeriods)
             {
                 var diff = period.endPeriod - period.startPeriod;
 
@@ -84,6 +94,122 @@ namespace enki.libs.workhours
             dayPeriods.Add(new WorkingPeriod(dayOfWeek,
                                              (short)Period.Between(MIDNIGHT, start, PeriodUnits.Minutes).Minutes,
                                              (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes));
+        }
+
+        /// <summary>
+        /// Define os horários de inicio e término do trabalho para um periodo de N dias da semana.
+        /// </summary>
+        /// <param name="startDay">Dia da semana, definido em "DateTimeConstants"</param>
+        /// <param name="endDay">Dia da semana, definido em "DateTimeConstants"</param>
+        /// <param name="start">Horario de inicio em NodaTime.LocalTime</param>
+        /// <param name="end">Horario de término em NodaTime.LocalTime</param>
+        public void setWorkPeriod(int startDay, int endDay, LocalTime start, LocalTime end)
+        {
+            if (startDay <= (int)IsoDayOfWeek.None || startDay > (int)IsoDayOfWeek.Sunday)
+                throw new ArgumentException($"The value {startDay} is not a valid day of week.", nameof(startDay));
+            if (endDay <= (int)IsoDayOfWeek.None || endDay > (int)IsoDayOfWeek.Sunday)
+                throw new ArgumentException($"The value {endDay} is not a valid day of week.", nameof(endDay));
+
+
+            dayPeriods = dayPeriods == null ? new List<WorkingPeriod>() : dayPeriods;
+
+            if (startDay == endDay && start >= end)
+            {
+                SetSameDayReversePeriod(startDay, start, end);
+            }
+            else
+            {
+                var daysBetween = GetDaysBetween((IsoDayOfWeek)startDay, (IsoDayOfWeek)endDay);
+                if (daysBetween.Count == 1)
+                {
+                    dayPeriods.Add(new WorkingPeriod(startDay,
+                        (short)Period.Between(MIDNIGHT, start, PeriodUnits.Minutes).Minutes,
+                        (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes));
+                }
+                if (daysBetween.Count > 1)
+                {
+                    foreach (var day in daysBetween)
+                    {
+                        if (day == daysBetween.First())
+                        {
+                            dayPeriods.Add(new WorkingPeriod((int)day,
+                                (short)Period.Between(MIDNIGHT, start, PeriodUnits.Minutes).Minutes,
+                                (short)Period.Between(MIDNIGHT, HOURS_235959, PeriodUnits.Minutes).Minutes));
+                            continue;
+                        }
+                        if (day == daysBetween.Last())
+                        {
+                            dayPeriods.Add(new WorkingPeriod((int)day,
+                                (short)Period.Between(MIDNIGHT, MIDNIGHT, PeriodUnits.Minutes).Minutes,
+                                (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes));
+                            continue;
+                        }
+
+                        dayPeriods.Add(new WorkingPeriod((int)day,
+                            (short)Period.Between(MIDNIGHT, MIDNIGHT, PeriodUnits.Minutes).Minutes,
+                            (short)Period.Between(MIDNIGHT, HOURS_235959, PeriodUnits.Minutes).Minutes));
+                    }
+                }
+            }
+        }
+
+        private void SetSameDayReversePeriod(int day, LocalTime start, LocalTime end)
+        {
+            for (int i = 0; i <= 7; i++)
+            {
+                if (i == 0)
+                {
+                    dayPeriods.Add(new WorkingPeriod(day,
+                        (short)Period.Between(MIDNIGHT, start, PeriodUnits.Minutes).Minutes,
+                        (short)Period.Between(MIDNIGHT, HOURS_235959, PeriodUnits.Minutes).Minutes));
+                    continue;
+                }
+                if (i == 7)
+                {
+                    dayPeriods.Add(new WorkingPeriod(day,
+                        (short)Period.Between(MIDNIGHT, MIDNIGHT, PeriodUnits.Minutes).Minutes,
+                        (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes));
+                    break;
+                }
+                dayPeriods.Add(new WorkingPeriod((int)AddDayOfWeek((IsoDayOfWeek)day, i),
+                    (short)Period.Between(MIDNIGHT, MIDNIGHT, PeriodUnits.Minutes).Minutes,
+                    (short)Period.Between(MIDNIGHT, HOURS_235959, PeriodUnits.Minutes).Minutes));
+
+            }
+        }
+
+        public static List<IsoDayOfWeek> GetDaysBetween(IsoDayOfWeek startDay, IsoDayOfWeek endDay)
+        {
+            var days = new List<IsoDayOfWeek>();
+
+            var currentDay = startDay;
+            while (true)
+            {
+                days.Add(currentDay);
+
+                if (currentDay == endDay)
+                    break;
+
+                currentDay = NextDayOfWeek(currentDay);
+            }
+
+            return days;
+        }
+
+        public static IsoDayOfWeek NextDayOfWeek(IsoDayOfWeek current)
+        {
+            return (IsoDayOfWeek)(((int)current % 7) + 1);
+        }
+
+        public static IsoDayOfWeek AddDayOfWeek(IsoDayOfWeek current, int add)
+        {
+            var sum = (IsoDayOfWeek)(((int)current + add) % 8);
+
+            if ((int)current + add > 7)
+            {
+                sum++;
+            }
+            return sum;
         }
 
         /// <summary>
