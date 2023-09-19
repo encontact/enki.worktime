@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using NodaTime;
 using enki.libs.workhours.domain;
 using System;
+using System.Linq;
 
 namespace enki.libs.workhours
 {
@@ -112,34 +113,60 @@ namespace enki.libs.workhours
 
             dayPeriods = dayPeriods == null ? new List<WorkingPeriod>() : dayPeriods;
 
-            if (endDay > startDay)
-            {
-
-                for (int currentDay = startDay; currentDay < endDay; currentDay++)
-                {
-                    if (currentDay == startDay)
-                    {
-                        dayPeriods.Add(new WorkingPeriod(startDay,
-                            (short)Period.Between(MIDNIGHT, start, PeriodUnits.Minutes).Minutes,
-                            (short)Period.Between(MIDNIGHT, HOURS_235959, PeriodUnits.Minutes).Minutes));
-                        continue;
-                    }
-
-                    dayPeriods.Add(new WorkingPeriod(currentDay,
-                        (short)Period.Between(MIDNIGHT, MIDNIGHT, PeriodUnits.Minutes).Minutes,
-                        (short)Period.Between(MIDNIGHT, HOURS_235959, PeriodUnits.Minutes).Minutes));
-                }
-
-                dayPeriods.Add(new WorkingPeriod(endDay,
-                    (short)Period.Between(MIDNIGHT, MIDNIGHT, PeriodUnits.Minutes).Minutes,
-                    (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes));
-            }
-            else
+            var daysBetween = GetDaysBetween((IsoDayOfWeek)startDay, (IsoDayOfWeek)endDay);
+            if (daysBetween.Count == 1)
             {
                 dayPeriods.Add(new WorkingPeriod(startDay,
                     (short)Period.Between(MIDNIGHT, start, PeriodUnits.Minutes).Minutes,
                     (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes));
             }
+            if (daysBetween.Count > 1)
+            {
+                foreach (var day in daysBetween)
+                {
+                    if (day == daysBetween.First())
+                    {
+                        dayPeriods.Add(new WorkingPeriod((int)day,
+                            (short)Period.Between(MIDNIGHT, start, PeriodUnits.Minutes).Minutes,
+                            (short)Period.Between(MIDNIGHT, HOURS_235959, PeriodUnits.Minutes).Minutes));
+                        continue;
+                    }
+                    if (day == daysBetween.Last())
+                    {
+                        dayPeriods.Add(new WorkingPeriod((int)day,
+                            (short)Period.Between(MIDNIGHT, MIDNIGHT, PeriodUnits.Minutes).Minutes,
+                            (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes));
+                        continue;
+                    }
+
+                    dayPeriods.Add(new WorkingPeriod((int)day,
+                        (short)Period.Between(MIDNIGHT, MIDNIGHT, PeriodUnits.Minutes).Minutes,
+                        (short)Period.Between(MIDNIGHT, HOURS_235959, PeriodUnits.Minutes).Minutes));
+                }
+            }
+        }
+
+        public static List<IsoDayOfWeek> GetDaysBetween(IsoDayOfWeek startDay, IsoDayOfWeek endDay)
+        {
+            var days = new List<IsoDayOfWeek>();
+
+            var currentDay = startDay;
+            while (true)
+            {
+                days.Add(currentDay);
+
+                if (currentDay == endDay)
+                    break;
+
+                currentDay = NextDayOfWeek(currentDay);
+            }
+
+            return days;
+        }
+
+        public static IsoDayOfWeek NextDayOfWeek(IsoDayOfWeek current)
+        {
+            return (IsoDayOfWeek)(((int)current % 7) + 1);
         }
 
         /// <summary>
