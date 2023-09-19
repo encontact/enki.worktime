@@ -157,6 +157,63 @@ namespace WorkTimeTests
         }
 
         [Fact]
+        public void ReverseOrderToSameDayPeriodTest()
+        {
+            var startDay = (int)IsoDayOfWeek.Friday;
+            var startLocalTime = new LocalTime(8, 0);
+
+            var endDay = (int)IsoDayOfWeek.Friday;
+            var endLocalTime = new LocalTime(6, 0);
+
+            var workingWeek = new ComplexWorkingWeek();
+
+            workingWeek.setWorkPeriod(startDay, endDay, startLocalTime, endLocalTime);
+
+            Assert.Equal(8, workingWeek.getPeriods().Count);
+
+            var startFriday = workingWeek.getPeriods(startDay).First();
+            var saturday = workingWeek.getPeriods((int)IsoDayOfWeek.Saturday).First();
+            var sunday = workingWeek.getPeriods((int)IsoDayOfWeek.Sunday).First();
+            var monday = workingWeek.getPeriods((int)IsoDayOfWeek.Monday).First();
+            var tuesday = workingWeek.getPeriods((int)IsoDayOfWeek.Tuesday).First();
+            var wednesday = workingWeek.getPeriods((int)IsoDayOfWeek.Wednesday).First();
+            var thursday = workingWeek.getPeriods((int)IsoDayOfWeek.Thursday).First();
+            var endFriday = workingWeek.getPeriods(endDay).Last();
+
+            Assert.NotNull(startFriday);
+            Assert.Equal(480, startFriday.startPeriod);
+            Assert.Equal(1439, startFriday.endPeriod);
+
+            Assert.NotNull(saturday);
+            Assert.Equal(0, saturday.startPeriod);
+            Assert.Equal(1439, saturday.endPeriod);
+
+            Assert.NotNull(sunday);
+            Assert.Equal(0, sunday.startPeriod);
+            Assert.Equal(1439, sunday.endPeriod);
+
+            Assert.NotNull(monday);
+            Assert.Equal(0, monday.startPeriod);
+            Assert.Equal(1439, monday.endPeriod);
+
+            Assert.NotNull(tuesday);
+            Assert.Equal(0, tuesday.startPeriod);
+            Assert.Equal(1439, tuesday.endPeriod);
+
+            Assert.NotNull(wednesday);
+            Assert.Equal(0, wednesday.startPeriod);
+            Assert.Equal(1439, wednesday.endPeriod);
+
+            Assert.NotNull(thursday);
+            Assert.Equal(0, thursday.startPeriod);
+            Assert.Equal(1439, thursday.endPeriod);
+
+            Assert.NotNull(endFriday);
+            Assert.Equal(0, endFriday.startPeriod);
+            Assert.Equal(360, endFriday.endPeriod);
+        }
+
+        [Fact]
         public void SingleDayPeriodTest()
         {
             var startDay = (int)IsoDayOfWeek.Monday;

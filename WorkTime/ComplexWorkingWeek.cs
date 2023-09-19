@@ -113,36 +113,68 @@ namespace enki.libs.workhours
 
             dayPeriods = dayPeriods == null ? new List<WorkingPeriod>() : dayPeriods;
 
-            var daysBetween = GetDaysBetween((IsoDayOfWeek)startDay, (IsoDayOfWeek)endDay);
-            if (daysBetween.Count == 1)
+            if (startDay == endDay && start >= end)
             {
-                dayPeriods.Add(new WorkingPeriod(startDay,
-                    (short)Period.Between(MIDNIGHT, start, PeriodUnits.Minutes).Minutes,
-                    (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes));
+                SetSameDayReversePeriod(startDay, start, end);
             }
-            if (daysBetween.Count > 1)
+            else
             {
-                foreach (var day in daysBetween)
+                var daysBetween = GetDaysBetween((IsoDayOfWeek)startDay, (IsoDayOfWeek)endDay);
+                if (daysBetween.Count == 1)
                 {
-                    if (day == daysBetween.First())
+                    dayPeriods.Add(new WorkingPeriod(startDay,
+                        (short)Period.Between(MIDNIGHT, start, PeriodUnits.Minutes).Minutes,
+                        (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes));
+                }
+                if (daysBetween.Count > 1)
+                {
+                    foreach (var day in daysBetween)
                     {
-                        dayPeriods.Add(new WorkingPeriod((int)day,
-                            (short)Period.Between(MIDNIGHT, start, PeriodUnits.Minutes).Minutes,
-                            (short)Period.Between(MIDNIGHT, HOURS_235959, PeriodUnits.Minutes).Minutes));
-                        continue;
-                    }
-                    if (day == daysBetween.Last())
-                    {
+                        if (day == daysBetween.First())
+                        {
+                            dayPeriods.Add(new WorkingPeriod((int)day,
+                                (short)Period.Between(MIDNIGHT, start, PeriodUnits.Minutes).Minutes,
+                                (short)Period.Between(MIDNIGHT, HOURS_235959, PeriodUnits.Minutes).Minutes));
+                            continue;
+                        }
+                        if (day == daysBetween.Last())
+                        {
+                            dayPeriods.Add(new WorkingPeriod((int)day,
+                                (short)Period.Between(MIDNIGHT, MIDNIGHT, PeriodUnits.Minutes).Minutes,
+                                (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes));
+                            continue;
+                        }
+
                         dayPeriods.Add(new WorkingPeriod((int)day,
                             (short)Period.Between(MIDNIGHT, MIDNIGHT, PeriodUnits.Minutes).Minutes,
-                            (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes));
-                        continue;
+                            (short)Period.Between(MIDNIGHT, HOURS_235959, PeriodUnits.Minutes).Minutes));
                     }
-
-                    dayPeriods.Add(new WorkingPeriod((int)day,
-                        (short)Period.Between(MIDNIGHT, MIDNIGHT, PeriodUnits.Minutes).Minutes,
-                        (short)Period.Between(MIDNIGHT, HOURS_235959, PeriodUnits.Minutes).Minutes));
                 }
+            }
+        }
+
+        private void SetSameDayReversePeriod(int day, LocalTime start, LocalTime end)
+        {
+            for (int i = 0; i <= 7; i++)
+            {
+                if (i == 0)
+                {
+                    dayPeriods.Add(new WorkingPeriod(day,
+                        (short)Period.Between(MIDNIGHT, start, PeriodUnits.Minutes).Minutes,
+                        (short)Period.Between(MIDNIGHT, HOURS_235959, PeriodUnits.Minutes).Minutes));
+                    continue;
+                }
+                if (i == 7)
+                {
+                    dayPeriods.Add(new WorkingPeriod(day,
+                        (short)Period.Between(MIDNIGHT, MIDNIGHT, PeriodUnits.Minutes).Minutes,
+                        (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes));
+                    break;
+                }
+                dayPeriods.Add(new WorkingPeriod((int)AddDayOfWeek((IsoDayOfWeek)day, i),
+                    (short)Period.Between(MIDNIGHT, MIDNIGHT, PeriodUnits.Minutes).Minutes,
+                    (short)Period.Between(MIDNIGHT, HOURS_235959, PeriodUnits.Minutes).Minutes));
+
             }
         }
 
@@ -167,6 +199,17 @@ namespace enki.libs.workhours
         public static IsoDayOfWeek NextDayOfWeek(IsoDayOfWeek current)
         {
             return (IsoDayOfWeek)(((int)current % 7) + 1);
+        }
+
+        public static IsoDayOfWeek AddDayOfWeek(IsoDayOfWeek current, int add)
+        {
+            var sum = (IsoDayOfWeek)(((int)current + add) % 8);
+
+            if ((int)current + add > 7)
+            {
+                sum++;
+            }
+            return sum;
         }
 
         /// <summary>
