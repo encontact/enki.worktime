@@ -7,12 +7,12 @@ namespace WorkTime.Tests
     public class RecurrentExceptionsBucketTests
     {
         [Fact]
-        public void AddTest()
+        public void AddUniqueByDayTest()
         {
             var date2000 = new NodaTime.LocalDateTime(2000, 01, 01, 0, 0);
             var date2001 = new NodaTime.LocalDateTime(2000, 01, 01, 0, 0);
 
-            var recurrentBucket = new RecurrentExceptionsBucket();
+            var recurrentBucket = new RecurrentExceptionsBucket(true);
             try
             {
                 recurrentBucket.Add(date2000, 480, 960);
@@ -32,6 +32,58 @@ namespace WorkTime.Tests
                 Assert.Equal("There is already an item to the date indicated in the list.", e.Message);
             }
         }
+
+        // [Fact]
+        // public void AddSolvingSimpleConflitTest()
+        // {
+        //     var date2000 = new NodaTime.LocalDateTime(2000, 01, 01, 0, 0);
+        //     var date2001 = new NodaTime.LocalDateTime(2000, 01, 01, 0, 0);
+
+        //     var recurrentBucket = new RecurrentExceptionsBucket();
+        //     try
+        //     {
+        //         recurrentBucket.Add(date2000, 480, 960);
+        //         recurrentBucket.Add(date2001, 0, 960);
+        //         Assert.True(true, "Accepted conflited period.");
+                
+        //         var period = recurrentBucket.GetPeriod(date2000);
+        //         Assert.Equal(0, period.Item1);
+        //         Assert.Equal(960, period.Item2);
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         // Assert.Equal("There is already an item to the date indicated in the list.", e.Message);
+        //         Assert.Fail(e.Message);
+        //     }
+        // }
+
+        // [Fact]
+        // public void AddSolvingTwoPeriodConflitTest()
+        // {
+        //     var date2000 = new NodaTime.LocalDateTime(2000, 01, 01, 0, 0);
+        //     var date2001 = new NodaTime.LocalDateTime(2000, 01, 01, 0, 0);
+
+        //     var recurrentBucket = new RecurrentExceptionsBucket();
+        //     try
+        //     {
+        //         recurrentBucket.Add(date2000, 480, 960);
+        //         recurrentBucket.Add(date2001, 1000, 1100);
+        //         Assert.True(true, "Accepted conflited period.");
+                
+        //         var period = recurrentBucket.GetPeriod(date2000);
+        //         Assert.Equal(480, period.Item1);
+        //         Assert.Equal(960, period.Item2);
+                
+        //         // var periods = recurrentBucket.GetPeriods(date2000);
+        //         // Assert.Equal(480, period.Item1);
+        //         // Assert.Equal(960, period.Item2);
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         // Assert.Equal("There is already an item to the date indicated in the list.", e.Message);
+        //         Assert.Fail(e.Message);
+        //     }
+        // }
 
         [Fact]
         public void HasTest()

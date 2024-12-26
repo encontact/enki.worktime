@@ -2,6 +2,7 @@ using enki.libs.workhours.domain;
 using NodaTime;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using WorkTime;
 
 namespace enki.libs.workhours
@@ -214,8 +215,9 @@ namespace enki.libs.workhours
             {
                 // exceções recorrentes
                 workDay[dayIndex] = workDay[dayIndex] == null ? new ComplexWorkingDay() : workDay[dayIndex];
-                var time = RecurrentExceptions.GetPeriod(currentDate);
-                var periods = GetExceptionDaySlices(time.Item1, time.Item2, workingWeek.getPeriods((int)currentDate.DayOfWeek));
+                // var time = RecurrentExceptions.GetPeriod(currentDate);
+                // var periods = GetExceptionDaySlices(time.Item1, time.Item2, workingWeek.getPeriods((int)currentDate.DayOfWeek));
+                var periods = RecurrentExceptions.GetPeriods(currentDate).Select(p => new Tuple<short, short>(p.Item1, p.Item2)).ToList();
                 foreach (var period in periods)
                 {
                     workDay[dayIndex].addDayPart(new SimpleWorkingDay(
