@@ -202,7 +202,9 @@ namespace enki.libs.workhours
             {
                 // exceções
                 workDay[dayIndex] = workDay[dayIndex] == null ? new ComplexWorkingDay() : workDay[dayIndex];
-                var periods = GetExceptionDaySlices(nextException.getDayStart(), nextException.getDayEnd(), workingWeek.getPeriods((int)currentDate.DayOfWeek));
+                var exceptionSlice = new List<(short, short)> { (nextException.getDayStart(), nextException.getDayEnd()) };
+                var daySlices = workingWeek.getPeriods((int)currentDate.DayOfWeek).Select(p => (p.startPeriod, p.endPeriod));
+                var periods = GetExceptionDaySlices(exceptionSlice, daySlices);
                 foreach (var period in periods)
                 {
                     workDay[dayIndex].addDayPart(new SimpleWorkingDay(
@@ -215,13 +217,12 @@ namespace enki.libs.workhours
             {
                 // exceções recorrentes
                 workDay[dayIndex] = workDay[dayIndex] == null ? new ComplexWorkingDay() : workDay[dayIndex];
-                // var time = RecurrentExceptions.GetPeriod(currentDate);
-                // var periods = GetExceptionDaySlices(time.Item1, time.Item2, workingWeek.getPeriods((int)currentDate.DayOfWeek));
-                var periods = RecurrentExceptions.GetPeriods(currentDate).Select(p => new Tuple<short, short>(p.Item1, p.Item2)).ToList();
+                var daySlices = workingWeek.getPeriods((int)currentDate.DayOfWeek).Select(p => (p.startPeriod, p.endPeriod));
+                var periods = GetExceptionDaySlices(RecurrentExceptions.GetPeriods(currentDate), daySlices);
                 foreach (var period in periods)
                 {
                     workDay[dayIndex].addDayPart(new SimpleWorkingDay(
-                        currentDate.ToDateTimeUnspecified(), period.Item1, period.Item2)
+                        currentDate.ToDateTimeUnspecified(), period.start, period.end)
                     );
                 }
             }
@@ -251,45 +252,114 @@ namespace enki.libs.workhours
         /// <param name="end">Minuto de fim do feriado</param>
         /// <param name="workingPeriods">Períodos de trabalho do dia.</param>
         /// <returns>Lista de períodos a serem considerados no tempo de trabalho.</returns>
-        public static List<Tuple<short, short>> GetExceptionDaySlices(short start, short end, List<WorkingPeriod> workingPeriods)
+        public static IEnumerable<(short start, short end)> GetExceptionDaySlices(IEnumerable<(short start, short end)> exceptionPeriods, IEnumerable<(short startPeriod, short endPeriod)> workingPeriods)
         {
-            var ret = new List<Tuple<short, short>>();
+            // Se a lista de exceções estiver vazia, retorna os períodos de trabalho.
+            if(exceptionPeriods.Count() == 0) return workingPeriods;
+            
+            // Se contém uma lista de exceções, deve-se calcular o tempo de trabalho para cada uma delas.
+            if(exceptionPeriods.Count() > 1)
+            {
+                var resultWorkDayPeriods = workingPeriods;
+                foreach(var exceptionBlock in exceptionPeriods)
+                {
+                    var exceptionSlice = new List<(short start, short end)> { exceptionBlock };
+                    resultWorkDayPeriods = GetExceptionDaySlices(exceptionSlice, resultWorkDayPeriods);
+                }
+                
+                return resultWorkDayPeriods;
+            }
+            
+            // Se tem apenas uma efetua o cáculo e retorna o resultado 
+            var ret = new List<(short start, short end)>();
+            var exceptionPeriod = exceptionPeriods.First();
             foreach (var workingPeriod in workingPeriods)
             {
-                if (workingPeriod.startPeriod < start)
+                if (workingPeriod.Item1 < exceptionPeriod.start)
                 {
-                    if (workingPeriod.endPeriod <= start)
+                    if (workingPeriod.endPeriod <= exceptionPeriod.start)
                     {
-                        ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, workingPeriod.endPeriod));
+                        ret.Add((workingPeriod.startPeriod, workingPeriod.endPeriod));
                     }
-                    else if (workingPeriod.endPeriod <= end)
+                    else if (workingPeriod.endPeriod <= exceptionPeriod.end)
                     {
-                        ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, start));
+                        ret.Add((workingPeriod.startPeriod, exceptionPeriod.start));
                     }
                     else
                     {
-                        ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, start));
-                        ret.Add(new Tuple<short, short>(end, workingPeriod.endPeriod));
+                        ret.Add((workingPeriod.startPeriod, exceptionPeriod.start));
+                        ret.Add((exceptionPeriod.end, workingPeriod.endPeriod));
                     }
                 }
-                else if (workingPeriod.startPeriod >= end)
+                else if (workingPeriod.startPeriod >= exceptionPeriod.end)
                 {
-                    ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, workingPeriod.endPeriod));
+                    ret.Add((workingPeriod.startPeriod, workingPeriod.endPeriod));
                 }
-                else if (workingPeriod.startPeriod < end)
+                else if (workingPeriod.startPeriod < exceptionPeriod.end)
                 {
-                    if (workingPeriod.endPeriod > end)
+                    if (workingPeriod.endPeriod > exceptionPeriod.end)
                     {
-                        ret.Add(new Tuple<short, short>(end, workingPeriod.endPeriod));
+                        ret.Add((exceptionPeriod.end, workingPeriod.endPeriod));
                     }
                 }
                 else
                 {
-                    ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, workingPeriod.endPeriod));
+                    ret.Add((workingPeriod.startPeriod, workingPeriod.endPeriod));
                 }
             }
             return ret;
         }
+        // /// <summary>
+        // /// Recupera o período útil a ser trabalhado considerando um dia de exceção.
+        // /// No caso, a regra para exceção diz que o período da exceção não é trabalhado, mas se o dia
+        // /// for útil, o restante do dia deve ser contabilizado.
+        // /// Exemplo: Exceção: 10/02/2000 das 00:00 as 12:00, se o dia for útil das 08:00 as 16:00,
+        // ///          ainda deve ser contato o tempo de trabalho das 12:00 as 16:00.
+        // /// </summary>
+        // /// <param name="start">Minuto de inicio do feriado</param>
+        // /// <param name="end">Minuto de fim do feriado</param>
+        // /// <param name="workingPeriods">Períodos de trabalho do dia.</param>
+        // /// <returns>Lista de períodos a serem considerados no tempo de trabalho.</returns>
+        // [Obsolete("Este método não comporta multiplas fatias de tempo do Feriado para cálculo e deve ser descontinuado.")] 
+        // public static List<Tuple<short, short>> GetExceptionDaySlices(short start, short end, List<WorkingPeriod> workingPeriods)
+        // {
+        //     var ret = new List<Tuple<short, short>>();
+        //     foreach (var workingPeriod in workingPeriods)
+        //     {
+        //         if (workingPeriod.startPeriod < start)
+        //         {
+        //             if (workingPeriod.endPeriod <= start)
+        //             {
+        //                 ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, workingPeriod.endPeriod));
+        //             }
+        //             else if (workingPeriod.endPeriod <= end)
+        //             {
+        //                 ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, start));
+        //             }
+        //             else
+        //             {
+        //                 ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, start));
+        //                 ret.Add(new Tuple<short, short>(end, workingPeriod.endPeriod));
+        //             }
+        //         }
+        //         else if (workingPeriod.startPeriod >= end)
+        //         {
+        //             ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, workingPeriod.endPeriod));
+        //         }
+        //         else if (workingPeriod.startPeriod < end)
+        //         {
+        //             if (workingPeriod.endPeriod > end)
+        //             {
+        //                 ret.Add(new Tuple<short, short>(end, workingPeriod.endPeriod));
+        //             }
+        //         }
+        //         else
+        //         {
+        //             ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, workingPeriod.endPeriod));
+        //         }
+        //     }
+        //     return ret;
+        // }
 
         /// <summary>
         /// Devolve a quantidade de horas úteis entre dois DateTime's arredondado p/ baixo (floor)
