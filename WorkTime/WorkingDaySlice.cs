@@ -4,7 +4,7 @@ using System;
 namespace enki.libs.workhours
 {
     /// <summary>
-    /// Interface padr„o que representa um dia de trabalho
+    /// Interface padr√£o que representa um dia de trabalho
     /// </summary>
     public interface WorkingDaySlice : IComparable<WorkingDaySlice>
     {

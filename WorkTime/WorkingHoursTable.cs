@@ -102,7 +102,7 @@ namespace enki.libs.workhours
             {
                 nextException = exceptionsIt.Current;
             }
-            // Inicia a regua.
+            // Inicia a régua.
             for (int i = 0; i < workDay.Length; i++)
             {
                 workDay[i] = new ComplexWorkingDay();
@@ -198,20 +198,26 @@ namespace enki.libs.workhours
                 nextException = exceptionsIt.Current;
             }
             int day = getLeapSafeDayOfYear(currentDate);
-            if (nextException != null && nextException.getDate().Date.Equals(currentDate.Date))
+            
+            // Recupera a lista de exceções para o dia.
+            var dayExceptionSlices = new List<(short, short)>();
+            while (nextException != null && nextException.getDate().Date.Equals(currentDate.Date))
+            {
+                dayExceptionSlices.Add((nextException.getDayStart(), nextException.getDayEnd()));
+                nextException = exceptionsIt.MoveNext() ? exceptionsIt.Current : null;
+            }
+            if (dayExceptionSlices.Any())
             {
                 // exceções
                 workDay[dayIndex] = workDay[dayIndex] == null ? new ComplexWorkingDay() : workDay[dayIndex];
-                var exceptionSlice = new List<(short, short)> { (nextException.getDayStart(), nextException.getDayEnd()) };
                 var daySlices = workingWeek.getPeriods((int)currentDate.DayOfWeek).Select(p => (p.startPeriod, p.endPeriod));
-                var periods = GetExceptionDaySlices(exceptionSlice, daySlices);
+                var periods = GetExceptionDaySlices(dayExceptionSlices, daySlices);
                 foreach (var period in periods)
                 {
                     workDay[dayIndex].addDayPart(new SimpleWorkingDay(
                         currentDate.ToDateTimeUnspecified(), period.Item1, period.Item2)
                     );
                 }
-                nextException = exceptionsIt.MoveNext() ? exceptionsIt.Current : null;
             }
             else if (RecurrentExceptions.Has(currentDate))
             {
@@ -318,7 +324,7 @@ namespace enki.libs.workhours
         /// <returns>A quantidade de horas úteis entre dois DateTime's</returns>
         public int getWorkingHoursBetween(DateTime start, DateTime end)
         {
-            return (int)Math.Floor(((double)getWorkingMinutesBetween(start, end) / MINS_PER_HOUR));
+            return (int)Math.Floor((double)getWorkingMinutesBetween(start, end) / MINS_PER_HOUR);
         }
 
         /// <summary>
@@ -332,7 +338,7 @@ namespace enki.libs.workhours
             int endIndex = DateUtils.toMJD(end) - mjdTableStart + 1;
             int startIndex = DateUtils.toMJD(start) - DateUtils.toMJD(tableStart) + 1;
 
-            // Extende a tabela para cima ou para baixo se necessario
+            // Estende a tabela para cima ou para baixo se necessário
             if (endIndex >= workDay.Length || startIndex >= workDay.Length)
             {
                 expandTableEnd(end.CompareTo(start) > 0 ? DateUtils.ToLocalDateTime(end) : DateUtils.ToLocalDateTime(start));
@@ -389,19 +395,19 @@ namespace enki.libs.workhours
             }
             // Recupera o dia do ano a ser trabalhado
             int day = DateUtils.toMJD(original) - mjdTableStart + 1;
-            // Recupera a contagem de minutos iniciais para a data "original", antes da adiçao.
+            // Recupera a contagem de minutos iniciais para a data "original", antes da adição.
             long firstDayTotal = getWorkingMinutesSum(day - 1) + getWorkingMinutesBetween(
                 new DateTime(original.Year, original.Month, original.Day, 0, 0, 0),
                 original
             );
-            // Se nao houver espaço no dia para adicionar o horario necessario, verifica no dia seguinte
+            // Se nao houver espaço no dia para adicionar o horário necessário, verifica no dia seguinte
             while (getWorkingMinutesSum(day) - firstDayTotal < totalMinutes)
             {
                 day++;
             }
             long delta = workingMinutesSum[day - 1] - firstDayTotal;
 
-            // Recupera a data onde serao inseridos os minutos uteis
+            // Recupera a data onde serão inseridos os minutos uteis
             LocalDateTime resultedDate = DateUtils.fromMJD(day + mjdTableStart - 1);
             // Calcula os minutos uteis a serem adicionados
             int minutesToAdd = (int)(totalMinutes - delta + workDay[day].getMinStartDayPart());

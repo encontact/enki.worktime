@@ -518,9 +518,11 @@ namespace enki.tests.libs.date
             // Define todo o período como feriado.
             var exceptions = new SortedSet<WorkingDaySlice>();
             var daysOnPeriod = Convert.ToInt32((endPeriod - startPeriod).TotalDays);
+            short firstMinuteOfDay = 0;
+            short lastMinuteOfDay = 1439;
             for (int day = 1; day <= daysOnPeriod; day++)
             {
-                var workDaySlice = new SimpleWorkingDay(new DateTime(2016, 01, day), (short)(0 + (0 * 60)), (short)(59 + (24 * 60)));
+                var workDaySlice = new SimpleWorkingDay(new DateTime(2016, 01, day), firstMinuteOfDay, lastMinuteOfDay);
                 exceptions.Add(workDaySlice);
             }
 
@@ -727,6 +729,57 @@ namespace enki.tests.libs.date
             var minutes = 25;
             var result = workingTable.addWorkingHours(date, hours, minutes);
             var expectedResult = new DateTime(2017, 06, 19, 00, 25, 00);
+            Assert.Equal(expectedResult, result);
+        }
+    
+        /// <summary>
+        /// Efetua um teste colocando 2 registros de feriado que geram conflito de cruzamento de horario
+        /// </summary>
+        [Fact]
+        public void testAddWorkingHoursSingleConflictedHoliday()
+        {
+            LocalTime MIDNIGHT = new LocalTime(0, 0, 0);
+            LocalTime MIDDAY = new LocalTime(12, 0, 0);
+            LocalTime NINE = new LocalTime(9, 0, 0);
+            LocalTime EIGHTEEN = new LocalTime(18, 00, 0);
+            LocalTime THIRTEEN = new LocalTime(13, 00, 0);
+            LocalTime TWENT_THREE = new LocalTime(23, 59, 0);
+            var workingWeek = new ComplexWorkingWeek();
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Monday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Tuesday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Wednesday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Thursday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Friday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Saturday, MIDNIGHT, MIDNIGHT);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Sunday, NINE, MIDDAY);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Sunday, THIRTEEN, EIGHTEEN);
+            
+            var exceptions = new SortedSet<WorkingDaySlice>();
+            var zeroHourInMinutes = (short)(0 + (0 * 60));
+            var thirteenHourInMinutes = (short)(0 + (13 * 60));
+            var elevenHourInMinutes = (short)(0 + (11 * 60));
+            var lastMinuteInDay = (short)(59 + (23 * 60));
+
+            // Feriado 1 no primeiro período...
+            var workDaySlice = new SimpleWorkingDay(new DateTime(2024, 12, 29), zeroHourInMinutes, thirteenHourInMinutes, false);
+            Assert.True(exceptions.Add(workDaySlice), "O primeiro feriado não foi adicionado na lista de feriados");
+            // Feriado conflitando com parte do segundo período...
+            var secondWorkDaySlice = new SimpleWorkingDay(new DateTime(2024, 12, 29), elevenHourInMinutes, lastMinuteInDay, false);
+            Assert.True(exceptions.Add(secondWorkDaySlice), "O segundo feriado não foi adicionado na lista de feriados");
+
+            var workingTable = new WorkingHoursTable(
+                workingWeek,
+                new List<WorkingDaySlice>(),
+                exceptions,
+                new LocalDateTime(2024, 12, 29, 15, 00),
+                new LocalDateTime(2024, 12, 29, 16, 59, 59)
+            );
+
+            var date = new DateTime(2024, 12, 29, 15, 44, 08);
+            var hours = 0;
+            var minutes = 25;
+            var result = workingTable.addWorkingHours(date, hours, minutes);
+            var expectedResult = new DateTime(2024, 12, 30, 00, 25, 00);
             Assert.Equal(expectedResult, result);
         }
     }
