@@ -39,14 +39,6 @@ namespace WorkTime
             return AlreadyExists(date.Month, date.Day);
         }
 
-        // [Obsolete("Este método deve ser substituido pelo de lista de períodos.")]
-        // public Tuple<short, short> GetPeriod(LocalDateTime date)
-        // {
-        //     if (!AlreadyExists(date.Month, date.Day)) throw new KeyNotFoundException();
-        //     var data = _bucket.First(b => b.Month == date.Month && b.Day == date.Day);
-        //     return new Tuple<short, short>(data.Start, data.End);
-        // }
-
         public IEnumerable<(short start, short end)> GetPeriods(LocalDateTime date)
         {
             if (!AlreadyExists(date.Month, date.Day)) throw new KeyNotFoundException();

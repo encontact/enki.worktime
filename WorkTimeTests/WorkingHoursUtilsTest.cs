@@ -3,6 +3,7 @@ using enki.libs.workhours.domain;
 using NodaTime;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 
 namespace enki.tests.libs.date
@@ -423,35 +424,47 @@ namespace enki.tests.libs.date
 
             short start = h_0000;
             short end = h_0000;
-            var ret = WorkingHoursTable.GetExceptionDaySlices(start, end, workingPeriods);
-            Assert.Equal(2, ret.Count);
-            Assert.Equal(h_0900, ret[0].Item1);
-            Assert.Equal(h_1200, ret[0].Item2);
-            Assert.Equal(h_1300, ret[1].Item1);
-            Assert.Equal(h_1800, ret[1].Item2);
+            // var ret = WorkingHoursTable.GetExceptionDaySlices(start, end, workingPeriods);
+            var workingSlices = workingPeriods.Select(w => (w.startPeriod, w.endPeriod)).ToList();
+            var sliceBlock = new List<(short, short)> { (start, end)};
+            var ret = WorkingHoursTable.GetExceptionDaySlices(sliceBlock, workingSlices);
+            Assert.Equal(2, ret.Count());
+            var firstItem = ret.First();
+            var secondItem = ret.Last();
+            Assert.Equal(h_0900, firstItem.start);
+            Assert.Equal(h_1200, firstItem.end);
+            Assert.Equal(h_1300, secondItem.start);
+            Assert.Equal(h_1800, secondItem.end);
 
             start = h_0900;
             end = h_1200;
-            ret = WorkingHoursTable.GetExceptionDaySlices(start, end, workingPeriods);
+            sliceBlock = new List<(short, short)> { (start, end)};
+            ret = WorkingHoursTable.GetExceptionDaySlices(sliceBlock, workingSlices);
             Assert.Single(ret);
-            Assert.Equal(h_1300, ret[0].Item1);
-            Assert.Equal(h_1800, ret[0].Item2);
+            firstItem = ret.First();
+            Assert.Equal(h_1300, firstItem.start);
+            Assert.Equal(h_1800, firstItem.end);
 
             start = h_1300;
             end = h_1800;
-            ret = WorkingHoursTable.GetExceptionDaySlices(start, end, workingPeriods);
+            sliceBlock = new List<(short, short)> { (start, end)};
+            ret = WorkingHoursTable.GetExceptionDaySlices(sliceBlock, workingSlices);
             Assert.Single(ret);
-            Assert.Equal(h_0900, ret[0].Item1);
-            Assert.Equal(h_1200, ret[0].Item2);
+            firstItem = ret.First();
+            Assert.Equal(h_0900, firstItem.start);
+            Assert.Equal(h_1200, firstItem.end);
 
             start = h_1000;
             end = h_1400;
-            ret = WorkingHoursTable.GetExceptionDaySlices(start, end, workingPeriods);
-            Assert.Equal(2, ret.Count);
-            Assert.Equal(h_0900, ret[0].Item1);
-            Assert.Equal(h_1000, ret[0].Item2);
-            Assert.Equal(h_1400, ret[1].Item1);
-            Assert.Equal(h_1800, ret[1].Item2);
+            sliceBlock = new List<(short, short)> { (start, end)};
+            ret = WorkingHoursTable.GetExceptionDaySlices(sliceBlock, workingSlices);
+            Assert.Equal(2, ret.Count());
+            firstItem = ret.First();
+            secondItem = ret.Last();
+            Assert.Equal(h_0900, firstItem.start);
+            Assert.Equal(h_1000, firstItem.end);
+            Assert.Equal(h_1400, secondItem.start);
+            Assert.Equal(h_1800, secondItem.end);
 
         }
 

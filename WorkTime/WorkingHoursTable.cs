@@ -309,57 +309,6 @@ namespace enki.libs.workhours
             }
             return ret;
         }
-        // /// <summary>
-        // /// Recupera o período útil a ser trabalhado considerando um dia de exceção.
-        // /// No caso, a regra para exceção diz que o período da exceção não é trabalhado, mas se o dia
-        // /// for útil, o restante do dia deve ser contabilizado.
-        // /// Exemplo: Exceção: 10/02/2000 das 00:00 as 12:00, se o dia for útil das 08:00 as 16:00,
-        // ///          ainda deve ser contato o tempo de trabalho das 12:00 as 16:00.
-        // /// </summary>
-        // /// <param name="start">Minuto de inicio do feriado</param>
-        // /// <param name="end">Minuto de fim do feriado</param>
-        // /// <param name="workingPeriods">Períodos de trabalho do dia.</param>
-        // /// <returns>Lista de períodos a serem considerados no tempo de trabalho.</returns>
-        // [Obsolete("Este método não comporta multiplas fatias de tempo do Feriado para cálculo e deve ser descontinuado.")] 
-        // public static List<Tuple<short, short>> GetExceptionDaySlices(short start, short end, List<WorkingPeriod> workingPeriods)
-        // {
-        //     var ret = new List<Tuple<short, short>>();
-        //     foreach (var workingPeriod in workingPeriods)
-        //     {
-        //         if (workingPeriod.startPeriod < start)
-        //         {
-        //             if (workingPeriod.endPeriod <= start)
-        //             {
-        //                 ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, workingPeriod.endPeriod));
-        //             }
-        //             else if (workingPeriod.endPeriod <= end)
-        //             {
-        //                 ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, start));
-        //             }
-        //             else
-        //             {
-        //                 ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, start));
-        //                 ret.Add(new Tuple<short, short>(end, workingPeriod.endPeriod));
-        //             }
-        //         }
-        //         else if (workingPeriod.startPeriod >= end)
-        //         {
-        //             ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, workingPeriod.endPeriod));
-        //         }
-        //         else if (workingPeriod.startPeriod < end)
-        //         {
-        //             if (workingPeriod.endPeriod > end)
-        //             {
-        //                 ret.Add(new Tuple<short, short>(end, workingPeriod.endPeriod));
-        //             }
-        //         }
-        //         else
-        //         {
-        //             ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, workingPeriod.endPeriod));
-        //         }
-        //     }
-        //     return ret;
-        // }
 
         /// <summary>
         /// Devolve a quantidade de horas úteis entre dois DateTime's arredondado p/ baixo (floor)
