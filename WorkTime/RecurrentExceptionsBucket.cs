@@ -1,38 +1,70 @@
 ﻿using NodaTime;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace WorkTime
 {
+    /// <summary>
+    /// Classe para processar os blocos de feriados existentes.
+    /// Esta classe ignora o Ano, ou seja, processa baseado no mês e dia informados.
+    /// </summary>
     public class RecurrentExceptionsBucket
     {
-        private readonly Dictionary<int, Dictionary<int, Tuple<short, short>>> _bucket = new Dictionary<int, Dictionary<int, Tuple<short, short>>>();
+        private bool validateUnique = false;
+        private readonly List<RecurrentExceptionItem> _bucket = new List<RecurrentExceptionItem>();
+
+        public RecurrentExceptionsBucket() => validateUnique = false;
+        /// <summary>
+        /// Construtor com opção de bloqueio para único feriado por dia
+        /// </summary>
+        /// <param name="validadeUnique">Indica se deve bloquear situações onde existe um feriado no mesmo dia</param>
+        public RecurrentExceptionsBucket(bool validadeUnique) => this.validateUnique = validadeUnique;
 
         private bool AlreadyExists(int Month, int Day)
         {
-            if (!_bucket.ContainsKey(Month)) return false;
-            return (_bucket[Month].ContainsKey(Day));
+            if (!_bucket.Any(b => b.Month == Month)) return false;
+            return _bucket.Where(b => b.Month == Month).Any(b => b.Day == Day);
         }
 
         public void Add(LocalDateTime date, short start, short end)
         {
-            if (AlreadyExists(date.Month, date.Day)) throw new Exception("There is already an item to the date indicated in the list.");
-            if (!_bucket.ContainsKey(date.Month)) _bucket.Add(date.Month, new Dictionary<int, Tuple<short, short>>());
-            _bucket[date.Month].Add(date.Day, new Tuple<short, short>(start, end));
+            var existsDay = AlreadyExists(date.Month, date.Day);
+            if (validateUnique && existsDay) throw new Exception("There is already an item to the date indicated in the list.");
+            _bucket.Add(new RecurrentExceptionItem(date.Month, date.Day, start, end));
         }
 
         public bool Has(LocalDateTime date)
         {
-            if (!_bucket.ContainsKey(date.Month)) return false;
-            if (!_bucket[date.Month].ContainsKey(date.Day)) return false;
-            return true;
+            return AlreadyExists(date.Month, date.Day);
         }
 
-        public Tuple<short, short> GetPeriod(LocalDateTime date)
+        public IEnumerable<(short start, short end)> GetPeriods(LocalDateTime date)
         {
-            if (!_bucket.ContainsKey(date.Month)) throw new KeyNotFoundException();
-            if (!_bucket[date.Month].ContainsKey(date.Day)) throw new KeyNotFoundException();
-            return _bucket[date.Month][date.Day];
+            if (!AlreadyExists(date.Month, date.Day)) throw new KeyNotFoundException();
+            return _bucket.Where(b => b.Month == date.Month && b.Day == date.Day).Select(b => (b.Start, b.End));
+        }
+    }
+
+    internal class RecurrentExceptionItem
+    {
+        public int Month { get; private set; }
+        public int Day { get; private set; }
+        public short Start { get; private set; }
+        public short End { get; private set; }
+
+        public RecurrentExceptionItem(int month, int day, short start, short end)
+        {
+            Month = month;
+            Day = day;
+            Start = start;
+            End = end;
+        }
+
+        internal void ExtendTo(short start, short end)
+        {
+            if(start < Start) Start = start;
+            if(end > End) End = end;
         }
     }
 }

@@ -2,6 +2,7 @@ using enki.libs.workhours.domain;
 using NodaTime;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using WorkTime;
 
 namespace enki.libs.workhours
@@ -101,7 +102,7 @@ namespace enki.libs.workhours
             {
                 nextException = exceptionsIt.Current;
             }
-            // Inicia a regua.
+            // Inicia a régua.
             for (int i = 0; i < workDay.Length; i++)
             {
                 workDay[i] = new ComplexWorkingDay();
@@ -197,29 +198,37 @@ namespace enki.libs.workhours
                 nextException = exceptionsIt.Current;
             }
             int day = getLeapSafeDayOfYear(currentDate);
-            if (nextException != null && nextException.getDate().Date.Equals(currentDate.Date))
+            
+            // Recupera a lista de exceções para o dia.
+            var dayExceptionSlices = new List<(short, short)>();
+            while (nextException != null && nextException.getDate().Date.Equals(currentDate.Date))
+            {
+                dayExceptionSlices.Add((nextException.getDayStart(), nextException.getDayEnd()));
+                nextException = exceptionsIt.MoveNext() ? exceptionsIt.Current : null;
+            }
+            if (dayExceptionSlices.Any())
             {
                 // exceções
                 workDay[dayIndex] = workDay[dayIndex] == null ? new ComplexWorkingDay() : workDay[dayIndex];
-                var periods = GetExceptionDaySlices(nextException.getDayStart(), nextException.getDayEnd(), workingWeek.getPeriods((int)currentDate.DayOfWeek));
+                var daySlices = workingWeek.getPeriods((int)currentDate.DayOfWeek).Select(p => (p.startPeriod, p.endPeriod));
+                var periods = GetExceptionDaySlices(dayExceptionSlices, daySlices);
                 foreach (var period in periods)
                 {
                     workDay[dayIndex].addDayPart(new SimpleWorkingDay(
                         currentDate.ToDateTimeUnspecified(), period.Item1, period.Item2)
                     );
                 }
-                nextException = exceptionsIt.MoveNext() ? exceptionsIt.Current : null;
             }
             else if (RecurrentExceptions.Has(currentDate))
             {
                 // exceções recorrentes
                 workDay[dayIndex] = workDay[dayIndex] == null ? new ComplexWorkingDay() : workDay[dayIndex];
-                var time = RecurrentExceptions.GetPeriod(currentDate);
-                var periods = GetExceptionDaySlices(time.Item1, time.Item2, workingWeek.getPeriods((int)currentDate.DayOfWeek));
+                var daySlices = workingWeek.getPeriods((int)currentDate.DayOfWeek).Select(p => (p.startPeriod, p.endPeriod));
+                var periods = GetExceptionDaySlices(RecurrentExceptions.GetPeriods(currentDate), daySlices);
                 foreach (var period in periods)
                 {
                     workDay[dayIndex].addDayPart(new SimpleWorkingDay(
-                        currentDate.ToDateTimeUnspecified(), period.Item1, period.Item2)
+                        currentDate.ToDateTimeUnspecified(), period.start, period.end)
                     );
                 }
             }
@@ -249,41 +258,59 @@ namespace enki.libs.workhours
         /// <param name="end">Minuto de fim do feriado</param>
         /// <param name="workingPeriods">Períodos de trabalho do dia.</param>
         /// <returns>Lista de períodos a serem considerados no tempo de trabalho.</returns>
-        public static List<Tuple<short, short>> GetExceptionDaySlices(short start, short end, List<WorkingPeriod> workingPeriods)
+        public static IEnumerable<(short start, short end)> GetExceptionDaySlices(IEnumerable<(short start, short end)> exceptionPeriods, IEnumerable<(short startPeriod, short endPeriod)> workingPeriods)
         {
-            var ret = new List<Tuple<short, short>>();
+            // Se a lista de exceções estiver vazia, retorna os períodos de trabalho.
+            if(exceptionPeriods.Count() == 0) return workingPeriods;
+            
+            // Se contém uma lista de exceções, deve-se calcular o tempo de trabalho para cada uma delas.
+            if(exceptionPeriods.Count() > 1)
+            {
+                var resultWorkDayPeriods = workingPeriods;
+                foreach(var exceptionBlock in exceptionPeriods)
+                {
+                    var exceptionSlice = new List<(short start, short end)> { exceptionBlock };
+                    resultWorkDayPeriods = GetExceptionDaySlices(exceptionSlice, resultWorkDayPeriods);
+                }
+                
+                return resultWorkDayPeriods;
+            }
+            
+            // Se tem apenas uma efetua o cáculo e retorna o resultado 
+            var ret = new List<(short start, short end)>();
+            var exceptionPeriod = exceptionPeriods.First();
             foreach (var workingPeriod in workingPeriods)
             {
-                if (workingPeriod.startPeriod < start)
+                if (workingPeriod.Item1 < exceptionPeriod.start)
                 {
-                    if (workingPeriod.endPeriod <= start)
+                    if (workingPeriod.endPeriod <= exceptionPeriod.start)
                     {
-                        ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, workingPeriod.endPeriod));
+                        ret.Add((workingPeriod.startPeriod, workingPeriod.endPeriod));
                     }
-                    else if (workingPeriod.endPeriod <= end)
+                    else if (workingPeriod.endPeriod <= exceptionPeriod.end)
                     {
-                        ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, start));
+                        ret.Add((workingPeriod.startPeriod, exceptionPeriod.start));
                     }
                     else
                     {
-                        ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, start));
-                        ret.Add(new Tuple<short, short>(end, workingPeriod.endPeriod));
+                        ret.Add((workingPeriod.startPeriod, exceptionPeriod.start));
+                        ret.Add((exceptionPeriod.end, workingPeriod.endPeriod));
                     }
                 }
-                else if (workingPeriod.startPeriod >= end)
+                else if (workingPeriod.startPeriod >= exceptionPeriod.end)
                 {
-                    ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, workingPeriod.endPeriod));
+                    ret.Add((workingPeriod.startPeriod, workingPeriod.endPeriod));
                 }
-                else if (workingPeriod.startPeriod < end)
+                else if (workingPeriod.startPeriod < exceptionPeriod.end)
                 {
-                    if (workingPeriod.endPeriod > end)
+                    if (workingPeriod.endPeriod > exceptionPeriod.end)
                     {
-                        ret.Add(new Tuple<short, short>(end, workingPeriod.endPeriod));
+                        ret.Add((exceptionPeriod.end, workingPeriod.endPeriod));
                     }
                 }
                 else
                 {
-                    ret.Add(new Tuple<short, short>(workingPeriod.startPeriod, workingPeriod.endPeriod));
+                    ret.Add((workingPeriod.startPeriod, workingPeriod.endPeriod));
                 }
             }
             return ret;
@@ -297,7 +324,7 @@ namespace enki.libs.workhours
         /// <returns>A quantidade de horas úteis entre dois DateTime's</returns>
         public int getWorkingHoursBetween(DateTime start, DateTime end)
         {
-            return (int)Math.Floor(((double)getWorkingMinutesBetween(start, end) / MINS_PER_HOUR));
+            return (int)Math.Floor((double)getWorkingMinutesBetween(start, end) / MINS_PER_HOUR);
         }
 
         /// <summary>
@@ -311,7 +338,7 @@ namespace enki.libs.workhours
             int endIndex = DateUtils.toMJD(end) - mjdTableStart + 1;
             int startIndex = DateUtils.toMJD(start) - DateUtils.toMJD(tableStart) + 1;
 
-            // Extende a tabela para cima ou para baixo se necessario
+            // Estende a tabela para cima ou para baixo se necessário
             if (endIndex >= workDay.Length || startIndex >= workDay.Length)
             {
                 expandTableEnd(end.CompareTo(start) > 0 ? DateUtils.ToLocalDateTime(end) : DateUtils.ToLocalDateTime(start));
@@ -368,19 +395,19 @@ namespace enki.libs.workhours
             }
             // Recupera o dia do ano a ser trabalhado
             int day = DateUtils.toMJD(original) - mjdTableStart + 1;
-            // Recupera a contagem de minutos iniciais para a data "original", antes da adiçao.
+            // Recupera a contagem de minutos iniciais para a data "original", antes da adição.
             long firstDayTotal = getWorkingMinutesSum(day - 1) + getWorkingMinutesBetween(
                 new DateTime(original.Year, original.Month, original.Day, 0, 0, 0),
                 original
             );
-            // Se nao houver espaço no dia para adicionar o horario necessario, verifica no dia seguinte
+            // Se nao houver espaço no dia para adicionar o horário necessário, verifica no dia seguinte
             while (getWorkingMinutesSum(day) - firstDayTotal < totalMinutes)
             {
                 day++;
             }
             long delta = workingMinutesSum[day - 1] - firstDayTotal;
 
-            // Recupera a data onde serao inseridos os minutos uteis
+            // Recupera a data onde serão inseridos os minutos uteis
             LocalDateTime resultedDate = DateUtils.fromMJD(day + mjdTableStart - 1);
             // Calcula os minutos uteis a serem adicionados
             int minutesToAdd = (int)(totalMinutes - delta + workDay[day].getMinStartDayPart());

@@ -3,6 +3,7 @@ using enki.libs.workhours.domain;
 using NodaTime;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 
 namespace enki.tests.libs.date
@@ -423,35 +424,47 @@ namespace enki.tests.libs.date
 
             short start = h_0000;
             short end = h_0000;
-            var ret = WorkingHoursTable.GetExceptionDaySlices(start, end, workingPeriods);
-            Assert.Equal(2, ret.Count);
-            Assert.Equal(h_0900, ret[0].Item1);
-            Assert.Equal(h_1200, ret[0].Item2);
-            Assert.Equal(h_1300, ret[1].Item1);
-            Assert.Equal(h_1800, ret[1].Item2);
+            // var ret = WorkingHoursTable.GetExceptionDaySlices(start, end, workingPeriods);
+            var workingSlices = workingPeriods.Select(w => (w.startPeriod, w.endPeriod)).ToList();
+            var sliceBlock = new List<(short, short)> { (start, end)};
+            var ret = WorkingHoursTable.GetExceptionDaySlices(sliceBlock, workingSlices);
+            Assert.Equal(2, ret.Count());
+            var firstItem = ret.First();
+            var secondItem = ret.Last();
+            Assert.Equal(h_0900, firstItem.start);
+            Assert.Equal(h_1200, firstItem.end);
+            Assert.Equal(h_1300, secondItem.start);
+            Assert.Equal(h_1800, secondItem.end);
 
             start = h_0900;
             end = h_1200;
-            ret = WorkingHoursTable.GetExceptionDaySlices(start, end, workingPeriods);
+            sliceBlock = new List<(short, short)> { (start, end)};
+            ret = WorkingHoursTable.GetExceptionDaySlices(sliceBlock, workingSlices);
             Assert.Single(ret);
-            Assert.Equal(h_1300, ret[0].Item1);
-            Assert.Equal(h_1800, ret[0].Item2);
+            firstItem = ret.First();
+            Assert.Equal(h_1300, firstItem.start);
+            Assert.Equal(h_1800, firstItem.end);
 
             start = h_1300;
             end = h_1800;
-            ret = WorkingHoursTable.GetExceptionDaySlices(start, end, workingPeriods);
+            sliceBlock = new List<(short, short)> { (start, end)};
+            ret = WorkingHoursTable.GetExceptionDaySlices(sliceBlock, workingSlices);
             Assert.Single(ret);
-            Assert.Equal(h_0900, ret[0].Item1);
-            Assert.Equal(h_1200, ret[0].Item2);
+            firstItem = ret.First();
+            Assert.Equal(h_0900, firstItem.start);
+            Assert.Equal(h_1200, firstItem.end);
 
             start = h_1000;
             end = h_1400;
-            ret = WorkingHoursTable.GetExceptionDaySlices(start, end, workingPeriods);
-            Assert.Equal(2, ret.Count);
-            Assert.Equal(h_0900, ret[0].Item1);
-            Assert.Equal(h_1000, ret[0].Item2);
-            Assert.Equal(h_1400, ret[1].Item1);
-            Assert.Equal(h_1800, ret[1].Item2);
+            sliceBlock = new List<(short, short)> { (start, end)};
+            ret = WorkingHoursTable.GetExceptionDaySlices(sliceBlock, workingSlices);
+            Assert.Equal(2, ret.Count());
+            firstItem = ret.First();
+            secondItem = ret.Last();
+            Assert.Equal(h_0900, firstItem.start);
+            Assert.Equal(h_1000, firstItem.end);
+            Assert.Equal(h_1400, secondItem.start);
+            Assert.Equal(h_1800, secondItem.end);
 
         }
 
@@ -505,9 +518,11 @@ namespace enki.tests.libs.date
             // Define todo o período como feriado.
             var exceptions = new SortedSet<WorkingDaySlice>();
             var daysOnPeriod = Convert.ToInt32((endPeriod - startPeriod).TotalDays);
+            short firstMinuteOfDay = 0;
+            short lastMinuteOfDay = 1439;
             for (int day = 1; day <= daysOnPeriod; day++)
             {
-                var workDaySlice = new SimpleWorkingDay(new DateTime(2016, 01, day), (short)(0 + (0 * 60)), (short)(59 + (24 * 60)));
+                var workDaySlice = new SimpleWorkingDay(new DateTime(2016, 01, day), firstMinuteOfDay, lastMinuteOfDay);
                 exceptions.Add(workDaySlice);
             }
 
@@ -716,5 +731,97 @@ namespace enki.tests.libs.date
             var expectedResult = new DateTime(2017, 06, 19, 00, 25, 00);
             Assert.Equal(expectedResult, result);
         }
+    
+        /// <summary>
+        /// Efetua um teste colocando 2 registros de feriado que geram conflito de cruzamento de horario
+        /// </summary>
+        [Fact]
+        public void testAddWorkingHoursSingleConflictedHoliday()
+        {
+            LocalTime MIDNIGHT = new LocalTime(0, 0, 0);
+            LocalTime MIDDAY = new LocalTime(12, 0, 0);
+            LocalTime NINE = new LocalTime(9, 0, 0);
+            LocalTime EIGHTEEN = new LocalTime(18, 00, 0);
+            LocalTime THIRTEEN = new LocalTime(13, 00, 0);
+            LocalTime TWENT_THREE = new LocalTime(23, 59, 0);
+            var workingWeek = new ComplexWorkingWeek();
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Monday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Tuesday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Wednesday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Thursday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Friday, MIDNIGHT, TWENT_THREE);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Saturday, MIDNIGHT, MIDNIGHT);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Sunday, NINE, MIDDAY);
+            workingWeek.setWorkDay((int)IsoDayOfWeek.Sunday, THIRTEEN, EIGHTEEN);
+            
+            var exceptions = new SortedSet<WorkingDaySlice>();
+            var zeroHourInMinutes = (short)(0 + (0 * 60));
+            var thirteenHourInMinutes = (short)(0 + (13 * 60));
+            var elevenHourInMinutes = (short)(0 + (11 * 60));
+            var lastMinuteInDay = (short)(59 + (23 * 60));
+
+            // Feriado 1 no primeiro período...
+            var workDaySlice = new SimpleWorkingDay(new DateTime(2024, 12, 29), zeroHourInMinutes, thirteenHourInMinutes, false);
+            Assert.True(exceptions.Add(workDaySlice), "O primeiro feriado não foi adicionado na lista de feriados");
+            // Feriado conflitando com parte do segundo período...
+            var secondWorkDaySlice = new SimpleWorkingDay(new DateTime(2024, 12, 29), elevenHourInMinutes, lastMinuteInDay, false);
+            Assert.True(exceptions.Add(secondWorkDaySlice), "O segundo feriado não foi adicionado na lista de feriados");
+
+            var workingTable = new WorkingHoursTable(
+                workingWeek,
+                new List<WorkingDaySlice>(),
+                exceptions,
+                new LocalDateTime(2024, 12, 29, 15, 00),
+                new LocalDateTime(2024, 12, 29, 16, 59, 59)
+            );
+
+            var date = new DateTime(2024, 12, 29, 15, 44, 08);
+            var hours = 0;
+            var minutes = 25;
+            var result = workingTable.addWorkingHours(date, hours, minutes);
+            var expectedResult = new DateTime(2024, 12, 30, 00, 25, 00);
+            Assert.Equal(expectedResult, result);
+        }
+    
+        [Fact]
+        public void testRecurrentExceptionsWithConflict()
+        {
+            List<WorkingDaySlice> recurrentExceptions = new List<WorkingDaySlice>();
+            SortedSet<WorkingDaySlice> exceptions = new SortedSet<WorkingDaySlice>();
+
+            DateTime min = new DateTime(2000, 1, 1, 0, 0, 0, 0);
+            DateTime max = new DateTime(2010, 12, 31, 23, 59, 59, 999);
+            long total = 1377600;
+
+            // Verifica o período total
+            WorkingHoursTable tabela = new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), new LocalDateTime(2000, 1, 1, 0, 0, 0), new LocalDateTime(2010, 12, 31, 0, 0, 0));
+            Assert.Equal(total, tabela.getWorkingMinutesBetween(min, max));
+
+            // Verifica o período total com um feriado
+            short EIGHT_HOUR = 480;
+            short SIXTEEN_HOUR = 960;
+            short FIRST_HOUR = 0;
+            short LAST_HOUR = 1440;
+            // Mesmo feriado, o sistema deve ignorar um e processar corretamente.
+            recurrentExceptions.Add(new SimpleWorkingDay(new LocalDateTime(2010, 7, 3, 0, 0, 0), EIGHT_HOUR, SIXTEEN_HOUR));
+            recurrentExceptions.Add(new SimpleWorkingDay(new LocalDateTime(2010, 7, 3, 0, 0, 0), EIGHT_HOUR, SIXTEEN_HOUR));
+            tabela = new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), recurrentExceptions, exceptions, new LocalDateTime(2000, 1, 1, 0, 0, 0), new LocalDateTime(2010, 12, 31, 0, 0, 0));
+            var HorasDoFeriadoNosAnos = 8 * 8 * 60; // 8 horas dia vezes 8 dias no período que são dias comerciais vezes 60 minutos por dia.
+            Assert.Equal(total - HorasDoFeriadoNosAnos, tabela.getWorkingMinutesBetween(min, max));
+
+            // Verifica o período com o feriado em outra data
+            recurrentExceptions.Clear();
+            recurrentExceptions.Add(new SimpleWorkingDay(new LocalDateTime(2010, 1, 3, 0, 0, 0), FIRST_HOUR, EIGHT_HOUR));
+            recurrentExceptions.Add(new SimpleWorkingDay(new LocalDateTime(2010, 1, 3, 0, 0, 0), EIGHT_HOUR, LAST_HOUR));
+            tabela = new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), recurrentExceptions, exceptions, new LocalDateTime(2000, 1, 1, 0, 0, 0), new LocalDateTime(2010, 12, 31, 0, 0, 0));
+            Assert.Equal(total - HorasDoFeriadoNosAnos, tabela.getWorkingMinutesBetween(min, max));
+
+            // Teste considerando que exceções normais devem se sobrepor às recorrentes
+            exceptions.Add(new SimpleWorkingDay(new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalTime(0, 0, 0), new LocalTime(7, 0, 0)));
+            tabela = new WorkingHoursTable(ComplexWorkingWeek.getWeek8x5(), recurrentExceptions, exceptions, new LocalDateTime(2000, 1, 1, 0, 0, 0), new LocalDateTime(2010, 12, 31, 0, 0, 0));
+            var HorasDoFeriadoNosAnosMenosUm = 7 * 8 * 60;
+            Assert.Equal(total - HorasDoFeriadoNosAnosMenosUm, tabela.getWorkingMinutesBetween(min, max));
+        }
+
     }
 }
