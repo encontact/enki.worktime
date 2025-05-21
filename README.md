@@ -21,3 +21,7 @@ Documentation about lib to calc business days.
 ## 2. Situação Build / Build Situation
 
 [![Build status](https://ci.appveyor.com/api/projects/status/h9mk1uyuhk635cbs?svg=true)](https://ci.appveyor.com/project/reinaldocoelho/enki-worktime)
+
+## 2. Documentação gerada por IA
+
+<https://deepwiki.com/encontact/enki.worktime>
