@@ -10,6 +10,100 @@ namespace enki.tests.libs.date
 {
     public class WorkingHoursUtilsTest
     {
+        private int HoursToSeconds(int hours) => hours * 60 * 60;
+        private int MinutesToSeconds(int minutes) => minutes * 60;
+
+        [Fact]
+        public void testWorkingSecondsBetween()
+        {
+            // Semana 8x7 (útil todos os dias, 8h/dia — tipicamente 08:00–16:00)
+            WorkingWeek workingWeek = ComplexWorkingWeek.getWeek8x7();
+            WorkingHoursTable table = new WorkingHoursTable(
+                workingWeek, new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalDateTime(2000, 1, 4, 0, 0, 0)
+            );
+
+            // ----- Mesmo dia, dentro do expediente (segundos parciais no início e/ou fim) -----
+            // 2000-01-01 08:00:15 -> 08:05:00 = 4m 45s
+            Assert.Equal(
+                MinutesToSeconds(4) + 45,
+                table.getWorkingSecondsBetween(new DateTime(2000, 1, 1, 8, 0, 15), new DateTime(2000, 1, 1, 8, 5, 0))
+            );
+
+            // 2000-01-01 09:15:30 -> 09:20:00 = 4m 30s
+            Assert.Equal(
+                MinutesToSeconds(4) + 30,
+                table.getWorkingSecondsBetween(new DateTime(2000, 1, 1, 9, 15, 30), new DateTime(2000, 1, 1, 9, 20, 0))
+            );
+
+            // 2000-01-01 08:00:00 -> 15:59:59 = 7h 59m 59s
+            Assert.Equal(
+                HoursToSeconds(7) + MinutesToSeconds(59) + 59,
+                table.getWorkingSecondsBetween(new DateTime(2000, 1, 1, 8, 0, 0), new DateTime(2000, 1, 1, 15, 59, 59))
+            );
+
+            // ----- Mesmo minuto (somente segundos) -----
+            // 2000-01-01 09:15:10 -> 09:15:50 = 40s
+            Assert.Equal(40, table.getWorkingSecondsBetween(new DateTime(2000, 1, 1, 9, 15, 10), new DateTime(2000, 1, 1, 9, 15, 50)));
+
+            // ----- Bordas do expediente -----
+            // Antes do expediente: 07:59:45 -> 08:00:15 = conta só 15s (08:00:00..08:00:15)
+            Assert.Equal(15, table.getWorkingSecondsBetween(new DateTime(2000, 1, 1, 7, 59, 45), new DateTime(2000, 1, 1, 8, 0, 15)));
+
+            // Depois do expediente: 15:59:50 -> 16:00:10 = conta só 10s (15:59:50..16:00:00)
+            Assert.Equal(10, table.getWorkingSecondsBetween(new DateTime(2000, 1, 1, 15, 59, 50), new DateTime(2000, 1, 1, 16, 0, 10)));
+
+            // Fora do expediente: 06:59:50 -> 07:00:05 = 0s
+            Assert.Equal(0, table.getWorkingSecondsBetween(new DateTime(2000, 1, 1, 6, 59, 50), new DateTime(2000, 1, 1, 7, 0, 5)));
+
+            // ----- Intervalo que inclui “pontas” fora do expediente (pega só 8h exatas) -----
+            // 07:59:50 -> 16:00:10 = exatamente 8h úteis (28800s)
+            Assert.Equal(
+                HoursToSeconds(8),
+                table.getWorkingSecondsBetween(new DateTime(2000, 1, 1, 7, 59, 50), new DateTime(2000, 1, 1, 16, 0, 10))
+            );
+
+            // ----- Cruzando o dia (8x7 conta sábado/domingo também) -----
+            // 2000-01-01 15:59:50 -> 2000-01-02 08:00:10 = 10s (dia 1) + 10s (dia 2) = 20s
+            Assert.Equal(20, table.getWorkingSecondsBetween(new DateTime(2000, 1, 1, 15, 59, 50), new DateTime(2000, 1, 2, 8, 0, 10)));
+
+            // ----- Minutos inteiros + segundos nas pontas (anti-bug: não subtrair quando end.Second < start.Second) -----
+            // 08:00:50 -> 09:00:10 = 59m inteiros (3540s) + 10s (início) + 10s (fim) = 3560s
+            Assert.Equal(
+                MinutesToSeconds(59) + 10 + 10,
+                table.getWorkingSecondsBetween(new DateTime(2000, 1, 1, 8, 0, 50), new DateTime(2000, 1, 1, 9, 0, 10))
+            );
+
+            // ----- Período grande (deve bater com o teste equivalente de minutos * 60) -----
+            table = new WorkingHoursTable(
+                workingWeek,
+                new LocalDateTime(1978, 7, 14, 0, 0, 0),
+                new LocalDateTime(2009, 9, 15, 0, 0, 0)
+            );
+
+            Assert.Equal(
+                11373 * HoursToSeconds(8),
+                table.getWorkingSecondsBetween(new DateTime(1978, 7, 29, 0, 0, 0), new DateTime(2009, 9, 17, 0, 0, 0))
+            );
+
+            // =========================
+            // Semana 8x5 (sem fim de semana)
+            // =========================
+            table = new WorkingHoursTable(
+                ComplexWorkingWeek.getWeek8x5(), new LocalDateTime(2000, 1, 3, 0, 0, 0), new LocalDateTime(2000, 1, 4, 0, 0, 0)
+            );
+
+            // Sexta -> Segunda, só segundos de borda: 15:59:45 (sexta) -> 08:00:15 (segunda) = 15s + 15s = 30s
+            Assert.Equal(30, table.getWorkingSecondsBetween(
+                new DateTime(2000, 1, 7, 15, 59, 45),   // sexta
+                new DateTime(2000, 1, 10, 8, 0, 15))    // segunda
+            );
+
+            // Sábado inteiro (sem horas úteis), intervalo curto deve dar 0
+            Assert.Equal(0, table.getWorkingSecondsBetween(
+                new DateTime(2000, 1, 8, 9, 0, 10),     // sábado
+                new DateTime(2000, 1, 8, 9, 0, 50))     // sábado
+            );
+        }
 
         [Fact]
         public void testWorkingMinutesBetween()
@@ -426,7 +520,7 @@ namespace enki.tests.libs.date
             short end = h_0000;
             // var ret = WorkingHoursTable.GetExceptionDaySlices(start, end, workingPeriods);
             var workingSlices = workingPeriods.Select(w => (w.startPeriod, w.endPeriod)).ToList();
-            var sliceBlock = new List<(short, short)> { (start, end)};
+            var sliceBlock = new List<(short, short)> { (start, end) };
             var ret = WorkingHoursTable.GetExceptionDaySlices(sliceBlock, workingSlices);
             Assert.Equal(2, ret.Count());
             var firstItem = ret.First();
@@ -438,7 +532,7 @@ namespace enki.tests.libs.date
 
             start = h_0900;
             end = h_1200;
-            sliceBlock = new List<(short, short)> { (start, end)};
+            sliceBlock = new List<(short, short)> { (start, end) };
             ret = WorkingHoursTable.GetExceptionDaySlices(sliceBlock, workingSlices);
             Assert.Single(ret);
             firstItem = ret.First();
@@ -447,7 +541,7 @@ namespace enki.tests.libs.date
 
             start = h_1300;
             end = h_1800;
-            sliceBlock = new List<(short, short)> { (start, end)};
+            sliceBlock = new List<(short, short)> { (start, end) };
             ret = WorkingHoursTable.GetExceptionDaySlices(sliceBlock, workingSlices);
             Assert.Single(ret);
             firstItem = ret.First();
@@ -456,7 +550,7 @@ namespace enki.tests.libs.date
 
             start = h_1000;
             end = h_1400;
-            sliceBlock = new List<(short, short)> { (start, end)};
+            sliceBlock = new List<(short, short)> { (start, end) };
             ret = WorkingHoursTable.GetExceptionDaySlices(sliceBlock, workingSlices);
             Assert.Equal(2, ret.Count());
             firstItem = ret.First();
@@ -711,7 +805,7 @@ namespace enki.tests.libs.date
             workingWeek.setWorkDay((int)IsoDayOfWeek.Friday, MIDNIGHT, TWENT_THREE);
             workingWeek.setWorkDay((int)IsoDayOfWeek.Saturday, MIDNIGHT, MIDNIGHT);
             workingWeek.setWorkDay((int)IsoDayOfWeek.Sunday, NINE, EIGHTEEN);
-            
+
             var exceptions = new SortedSet<WorkingDaySlice>();
             var workDaySlice = new SimpleWorkingDay(new DateTime(2017, 06, 18), (short)(0 + (0 * 60)), (short)(59 + (23 * 60)));
             exceptions.Add(workDaySlice);
@@ -731,7 +825,7 @@ namespace enki.tests.libs.date
             var expectedResult = new DateTime(2017, 06, 19, 00, 25, 00);
             Assert.Equal(expectedResult, result);
         }
-    
+
         /// <summary>
         /// Efetua um teste colocando 2 registros de feriado que geram conflito de cruzamento de horario
         /// </summary>
@@ -753,7 +847,7 @@ namespace enki.tests.libs.date
             workingWeek.setWorkDay((int)IsoDayOfWeek.Saturday, MIDNIGHT, MIDNIGHT);
             workingWeek.setWorkDay((int)IsoDayOfWeek.Sunday, NINE, MIDDAY);
             workingWeek.setWorkDay((int)IsoDayOfWeek.Sunday, THIRTEEN, EIGHTEEN);
-            
+
             var exceptions = new SortedSet<WorkingDaySlice>();
             var zeroHourInMinutes = (short)(0 + (0 * 60));
             var thirteenHourInMinutes = (short)(0 + (13 * 60));
@@ -782,7 +876,7 @@ namespace enki.tests.libs.date
             var expectedResult = new DateTime(2024, 12, 30, 00, 25, 00);
             Assert.Equal(expectedResult, result);
         }
-    
+
         [Fact]
         public void testRecurrentExceptionsWithConflict()
         {

@@ -198,7 +198,7 @@ namespace enki.libs.workhours
                 nextException = exceptionsIt.Current;
             }
             int day = getLeapSafeDayOfYear(currentDate);
-            
+
             // Recupera a lista de exceções para o dia.
             var dayExceptionSlices = new List<(short, short)>();
             while (nextException != null && nextException.getDate().Date.Equals(currentDate.Date))
@@ -261,21 +261,21 @@ namespace enki.libs.workhours
         public static IEnumerable<(short start, short end)> GetExceptionDaySlices(IEnumerable<(short start, short end)> exceptionPeriods, IEnumerable<(short startPeriod, short endPeriod)> workingPeriods)
         {
             // Se a lista de exceções estiver vazia, retorna os períodos de trabalho.
-            if(exceptionPeriods.Count() == 0) return workingPeriods;
-            
+            if (exceptionPeriods.Count() == 0) return workingPeriods;
+
             // Se contém uma lista de exceções, deve-se calcular o tempo de trabalho para cada uma delas.
-            if(exceptionPeriods.Count() > 1)
+            if (exceptionPeriods.Count() > 1)
             {
                 var resultWorkDayPeriods = workingPeriods;
-                foreach(var exceptionBlock in exceptionPeriods)
+                foreach (var exceptionBlock in exceptionPeriods)
                 {
                     var exceptionSlice = new List<(short start, short end)> { exceptionBlock };
                     resultWorkDayPeriods = GetExceptionDaySlices(exceptionSlice, resultWorkDayPeriods);
                 }
-                
+
                 return resultWorkDayPeriods;
             }
-            
+
             // Se tem apenas uma efetua o cáculo e retorna o resultado 
             var ret = new List<(short start, short end)>();
             var exceptionPeriod = exceptionPeriods.First();
@@ -369,6 +369,52 @@ namespace enki.libs.workhours
 
             return minutes;
         }
+
+        /// <summary>
+        /// Devolve a quantidade de segundos úteis entre dois DateTime's
+        /// </summary>
+        /// <param name="start">inicio</param>
+        /// <param name="end">fim</param>
+        /// <returns>A quantidade de segundos úteis entre dois DateTime's</returns>
+        public long getWorkingSecondsBetween(DateTime start, DateTime end)
+        {
+            int endIndex = DateUtils.toMJD(end) - mjdTableStart + 1;
+            int startIndex = DateUtils.toMJD(start) - DateUtils.toMJD(tableStart) + 1;
+
+            // Estende a tabela para cima ou para baixo se necessário
+            if (endIndex >= workDay.Length || startIndex >= workDay.Length)
+            {
+                expandTableEnd(end.CompareTo(start) > 0 ? DateUtils.ToLocalDateTime(end) : DateUtils.ToLocalDateTime(start));
+            }
+            if (startIndex < 1 || endIndex < 1)
+            {
+                expandTableStart(end.CompareTo(start) < 0 ? DateUtils.ToLocalDateTime(end) : DateUtils.ToLocalDateTime(start));
+                endIndex = DateUtils.toMJD(end) - mjdTableStart + 1;
+                startIndex = DateUtils.toMJD(start) - DateUtils.toMJD(tableStart) + 1;
+            }
+
+            int secondsDifference = 0;
+
+            DateTime lastDayStart = new DateTime(end.Year, end.Month, end.Day, 0, 0, 0).AddMinutes(workDay[endIndex].getMinStartDayPart());
+            DateTime lastDayEnd = new DateTime(end.Year, end.Month, end.Day, 0, 0, 0).AddMinutes(workDay[endIndex].getMaxEndDayPart());
+
+            if (end > lastDayStart && end < lastDayEnd)
+                secondsDifference += end.Second;
+
+            DateTime firstDayStart = new DateTime(start.Year, start.Month, start.Day, 0, 0, 0).AddMinutes(workDay[startIndex].getMinStartDayPart());
+            DateTime firstDayEnd = new DateTime(start.Year, start.Month, start.Day, 0, 0, 0).AddMinutes(workDay[startIndex].getMaxEndDayPart());
+
+            if (start > firstDayStart && start < firstDayEnd)
+                secondsDifference -= start.Second;
+
+            var minutes = getWorkingMinutesBetween(start, end);
+
+            // Converte minutos para segundos e soma a diferença
+            var totalSeconds = (minutes * 60) + secondsDifference;
+
+            return totalSeconds;
+        }
+
 
         /// <summary>
         /// Adiciona uma determinada quantidade de horas e minutos uteis a um DateTime padrão C#
