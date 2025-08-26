@@ -395,6 +395,8 @@ namespace enki.libs.workhours
 
             int secondsDifference = 0;
 
+            var minutes = getWorkingMinutesBetween(start, end);
+
             DateTime lastDayStart = new DateTime(end.Year, end.Month, end.Day, 0, 0, 0).AddMinutes(workDay[endIndex].getMinStartDayPart());
             DateTime lastDayEnd = new DateTime(end.Year, end.Month, end.Day, 0, 0, 0).AddMinutes(workDay[endIndex].getMaxEndDayPart());
 
@@ -405,9 +407,7 @@ namespace enki.libs.workhours
             DateTime firstDayEnd = new DateTime(start.Year, start.Month, start.Day, 0, 0, 0).AddMinutes(workDay[startIndex].getMaxEndDayPart());
 
             if (start > firstDayStart && start < firstDayEnd)
-                secondsDifference -= start.Second;
-
-            var minutes = getWorkingMinutesBetween(start, end);
+                secondsDifference -= start.Second;            
 
             // Converte minutos para segundos e soma a diferença
             var totalSeconds = (minutes * 60) + secondsDifference;
