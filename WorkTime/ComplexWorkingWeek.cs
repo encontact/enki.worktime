@@ -1,7 +1,7 @@
-using System.Collections.Generic;
-using NodaTime;
 using enki.libs.workhours.domain;
+using NodaTime;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace enki.libs.workhours
@@ -30,6 +30,19 @@ namespace enki.libs.workhours
 
         private List<WorkingPeriod> dayPeriods { get; set; }
 
+        private static short ToEndMinutes(LocalTime end)
+        {
+            // se o fim do período é o "fim do dia", consideramos os minutos presentes em 24:00 (1440)
+            if (end == HOURS_235959)
+                return 24 * 60; // 1440
+
+            return (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes;
+        }
+
+        private static short ToStartMinutes(LocalTime start)
+        {
+            return (short)Period.Between(MIDNIGHT, start, PeriodUnits.Minutes).Minutes;
+        }
 
         /// <summary>
         /// Recupera a lista de periodos da semana toda
@@ -91,9 +104,11 @@ namespace enki.libs.workhours
                 throw new ArgumentException($"The value {dayOfWeek} is not a valid day of week.", nameof(dayOfWeek));
 
             dayPeriods = dayPeriods == null ? new List<WorkingPeriod>() : dayPeriods;
-            dayPeriods.Add(new WorkingPeriod(dayOfWeek,
-                                             (short)Period.Between(MIDNIGHT, start, PeriodUnits.Minutes).Minutes,
-                                             (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes));
+            dayPeriods.Add(new WorkingPeriod(
+                dayOfWeek,
+                ToStartMinutes(start),
+                ToEndMinutes(end)
+            ));
         }
 
         /// <summary>

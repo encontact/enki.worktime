@@ -106,6 +106,34 @@ namespace enki.tests.libs.date
         }
 
         [Fact]
+        public void testWorkingSecondsBetween2()
+        {
+            /// Recupera uma semana padrão de 7 dias com vinte e quatro horas de trabalho por dia em 1 periodo por dia.
+            WorkingWeek workingWeek = ComplexWorkingWeek.getWeek24x7();
+
+            WorkingHoursTable table = new WorkingHoursTable(
+                workingWeek,
+                new LocalDateTime(2000, 1, 3, 0, 0, 0),
+                new LocalDateTime(2000, 1, 4, 0, 0, 0)
+            );
+
+            const int SECS_PER_MIN = 60;
+
+            // 20:55 até 00:00
+            // 2000-01-01 20:55:00 -> 2000-01-02 00:00:00 = 3h 5m = 185 minutos
+            // Em segundos: 185 * 60 = 11100
+            var seconds = table.getWorkingSecondsBetween(
+                    new DateTime(2000, 1, 1, 20, 55, 0),
+                    new DateTime(2000, 1, 2, 0, 0, 0)
+                );
+
+            Assert.Equal(
+                (185 * SECS_PER_MIN),
+                seconds
+            );
+        }
+
+        [Fact]
         public void testWorkingMinutesBetween()
         {
             WorkingWeek workingWeek = ComplexWorkingWeek.getWeek8x7();
@@ -158,6 +186,77 @@ namespace enki.tests.libs.date
             tabela = new WorkingHoursTable(workingWeek, new LocalDateTime(1978, 7, 14, 0, 0, 0), new LocalDateTime(2009, 9, 15, 0, 0, 0));
             Assert.Equal(11373 * 8 * 60, tabela.getWorkingMinutesBetween(new DateTime(1978, 7, 29, 0, 0, 0, 0), new DateTime(2009, 9, 17, 0, 0,
                     0, 0)));
+        }
+
+        [Fact]
+        public void testWorkingMinutesBetween2()
+        {
+            /// Recupera uma semana padrão de 7 dias com vinte e quatro horas de trabalho por dia em 1 periodo por dia.
+            /// Trabalho no período das 00:00 às 23:59
+            WorkingWeek workingWeek = ComplexWorkingWeek.getWeek24x7();
+
+            WorkingHoursTable table = new WorkingHoursTable(
+                workingWeek,
+                new LocalDateTime(2000, 1, 3, 0, 0, 0),
+                new LocalDateTime(2000, 1, 4, 0, 0, 0)
+            );
+
+            const int MINS_PER_HOUR = 60;
+
+            // 20:55 até 00:00
+            // 2000-01-01 20:55:00 -> 2000-01-02 00:00:00 = 3h 5m
+            Assert.Equal(
+                (MINS_PER_HOUR * 3) + 5, // 185
+                table.getWorkingMinutesBetween(new DateTime(2000, 1, 1, 20, 55, 0), new DateTime(2000, 1, 2, 0, 0, 0))
+            );
+        }
+
+        [Fact]
+        public void testWorkingMinutesBetween3()
+        {
+            // Recupera uma semana padrão de 7 dias com vinte e quatro horas de trabalho por dia em 1 periodo por dia.
+            // Trabalho no período das 00:00 às 23:59
+            WorkingWeek workingWeek = ComplexWorkingWeek.getWeek24x7();
+
+            WorkingHoursTable table = new WorkingHoursTable(
+                workingWeek,
+                new LocalDateTime(2000, 1, 3, 0, 0, 0),
+                new LocalDateTime(2000, 1, 4, 0, 0, 0)
+            );
+
+            const int MINS_PER_HOUR = 60;
+            var result = table.getWorkingMinutesBetween(new DateTime(2000, 1, 1, 20, 55, 0), new DateTime(2000, 1, 2, 0, 1, 0));
+
+            // 20:55 até 00:01
+            // 2000-01-01 20:55:00 -> 2000-01-02 00:01:00 = 3h 6m
+            Assert.Equal(
+                (MINS_PER_HOUR * 3) + 6, // 186
+                result
+            );
+        }
+
+        [Fact]
+        public void testWorkingMinutesBetween4()
+        {
+            // Recupera uma semana padrão de 7 dias com vinte e quatro horas de trabalho por dia em 1 periodo por dia.
+            // Trabalho no período das 00:00 às 23:59
+            WorkingWeek workingWeek = ComplexWorkingWeek.getWeek24x7();
+
+            WorkingHoursTable table = new WorkingHoursTable(
+                workingWeek,
+                new LocalDateTime(2000, 1, 3, 0, 0, 0),
+                new LocalDateTime(2000, 1, 4, 0, 0, 0)
+            );
+
+            const int MINS_PER_HOUR = 60;
+            var result = table.getWorkingMinutesBetween(new DateTime(2000, 1, 1, 20, 55, 0), new DateTime(2000, 1, 1, 23, 59, 59));
+
+            // 20:55 até 00:01
+            // 2000-01-01 20:55:00 -> 2000-01-02 00:01:00 = 3h 6m
+            Assert.Equal(
+                (MINS_PER_HOUR * 3) + 4, // 184
+                result
+            );
         }
 
         [Fact]
