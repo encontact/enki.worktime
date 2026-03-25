@@ -1,6 +1,7 @@
 using enki.libs.workhours;
 using enki.libs.workhours.interfaces;
 using NodaTime;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
@@ -9,7 +10,7 @@ namespace WorkTimeTests
 {
     public class ComplexWorkingWeekFromWorktimeTest
     {
-        private class TestWorkingHour : IWorkingHour
+        private class WorkingHour : IWorkingHour
         {
             public WeekDays StartDay { get; set; }
             public int StartHour { get; set; }
@@ -57,7 +58,7 @@ namespace WorkTimeTests
         {
             var workTimes = new List<IWorkingHour>
             {
-                new TestWorkingHour
+                new WorkingHour
                 {
                     StartDay = WeekDays.Monday,
                     StartHour = 8,
@@ -86,7 +87,7 @@ namespace WorkTimeTests
         {
             var workTimes = new List<IWorkingHour>
             {
-                new TestWorkingHour
+                new WorkingHour
                 {
                     StartDay = WeekDays.Monday,
                     StartHour = 9,
@@ -122,7 +123,7 @@ namespace WorkTimeTests
         {
             var workTimes = new List<IWorkingHour>
             {
-                new TestWorkingHour
+                new WorkingHour
                 {
                     StartDay = WeekDays.Monday,
                     StartHour = 8,
@@ -131,7 +132,7 @@ namespace WorkTimeTests
                     EndHour = 12,
                     EndMinute = 0
                 },
-                new TestWorkingHour
+                new WorkingHour
                 {
                     StartDay = WeekDays.Monday,
                     StartHour = 13,
@@ -163,7 +164,7 @@ namespace WorkTimeTests
         {
             var workTimes = new List<IWorkingHour>
             {
-                new TestWorkingHour
+                new WorkingHour
                 {
                     StartDay = WeekDays.Monday,
                     StartHour = 9,
@@ -172,7 +173,7 @@ namespace WorkTimeTests
                     EndHour = 17,
                     EndMinute = 30
                 },
-                new TestWorkingHour
+                new WorkingHour
                 {
                     StartDay = WeekDays.Wednesday,
                     StartHour = 10,
@@ -204,7 +205,7 @@ namespace WorkTimeTests
         {
             var workTimes = new List<IWorkingHour>
             {
-                new TestWorkingHour
+                new WorkingHour
                 {
                     StartDay = WeekDays.Monday,
                     StartHour = 8,
@@ -213,7 +214,7 @@ namespace WorkTimeTests
                     EndHour = 17,
                     EndMinute = 0
                 },
-                new TestWorkingHour
+                new WorkingHour
                 {
                     StartDay = WeekDays.Saturday,
                     StartHour = 9,
@@ -241,7 +242,7 @@ namespace WorkTimeTests
         {
             var workTimes = new List<IWorkingHour>
             {
-                new TestWorkingHour
+                new WorkingHour
                 {
                     StartDay = WeekDays.Monday,
                     StartHour = 0,
@@ -269,7 +270,7 @@ namespace WorkTimeTests
         {
             var workTimes = new List<IWorkingHour>
             {
-                new TestWorkingHour
+                new WorkingHour
                 {
                     StartDay = WeekDays.Tuesday,
                     StartHour = 6,
@@ -278,7 +279,7 @@ namespace WorkTimeTests
                     EndHour = 14,
                     EndMinute = 0
                 },
-                new TestWorkingHour
+                new WorkingHour
                 {
                     StartDay = WeekDays.Tuesday,
                     StartHour = 12,
@@ -303,7 +304,7 @@ namespace WorkTimeTests
         {
             var workTimes = new List<IWorkingHour>
             {
-                new TestWorkingHour
+                new WorkingHour
                 {
                     StartDay = WeekDays.Saturday,
                     StartHour = 20,
@@ -339,7 +340,7 @@ namespace WorkTimeTests
         {
             var workTimes = new List<IWorkingHour>
             {
-                new TestWorkingHour
+                new WorkingHour
                 {
                     StartDay = WeekDays.Wednesday,
                     StartHour = 22,
@@ -363,13 +364,13 @@ namespace WorkTimeTests
         {
             var workTimes = new List<IWorkingHour>
             {
-                new TestWorkingHour { StartDay = WeekDays.Monday, StartHour = 9, StartMinute = 0, EndDay = WeekDays.Monday, EndHour = 17, EndMinute = 0 },
-                new TestWorkingHour { StartDay = WeekDays.Tuesday, StartHour = 9, StartMinute = 0, EndDay = WeekDays.Tuesday, EndHour = 17, EndMinute = 0 },
-                new TestWorkingHour { StartDay = WeekDays.Wednesday, StartHour = 9, StartMinute = 0, EndDay = WeekDays.Wednesday, EndHour = 17, EndMinute = 0 },
-                new TestWorkingHour { StartDay = WeekDays.Thursday, StartHour = 9, StartMinute = 0, EndDay = WeekDays.Thursday, EndHour = 17, EndMinute = 0 },
-                new TestWorkingHour { StartDay = WeekDays.Friday, StartHour = 9, StartMinute = 0, EndDay = WeekDays.Friday, EndHour = 17, EndMinute = 0 },
-                new TestWorkingHour { StartDay = WeekDays.Saturday, StartHour = 10, StartMinute = 0, EndDay = WeekDays.Saturday, EndHour = 14, EndMinute = 0 },
-                new TestWorkingHour { StartDay = WeekDays.Sunday, StartHour = 10, StartMinute = 0, EndDay = WeekDays.Sunday, EndHour = 14, EndMinute = 0 }
+                new WorkingHour { StartDay = WeekDays.Monday, StartHour = 9, StartMinute = 0, EndDay = WeekDays.Monday, EndHour = 17, EndMinute = 0 },
+                new WorkingHour { StartDay = WeekDays.Tuesday, StartHour = 9, StartMinute = 0, EndDay = WeekDays.Tuesday, EndHour = 17, EndMinute = 0 },
+                new WorkingHour { StartDay = WeekDays.Wednesday, StartHour = 9, StartMinute = 0, EndDay = WeekDays.Wednesday, EndHour = 17, EndMinute = 0 },
+                new WorkingHour { StartDay = WeekDays.Thursday, StartHour = 9, StartMinute = 0, EndDay = WeekDays.Thursday, EndHour = 17, EndMinute = 0 },
+                new WorkingHour { StartDay = WeekDays.Friday, StartHour = 9, StartMinute = 0, EndDay = WeekDays.Friday, EndHour = 17, EndMinute = 0 },
+                new WorkingHour { StartDay = WeekDays.Saturday, StartHour = 10, StartMinute = 0, EndDay = WeekDays.Saturday, EndHour = 14, EndMinute = 0 },
+                new WorkingHour { StartDay = WeekDays.Sunday, StartHour = 10, StartMinute = 0, EndDay = WeekDays.Sunday, EndHour = 14, EndMinute = 0 }
             };
 
             var result = ComplexWorkingWeek.GetWorkingWeekFromWorktime(workTimes);
@@ -390,7 +391,7 @@ namespace WorkTimeTests
         {
             var workTimes = new List<IWorkingHour>
             {
-                new TestWorkingHour
+                new WorkingHour
                 {
                     StartDay = WeekDays.Thursday,
                     StartHour = 8,
@@ -419,13 +420,13 @@ namespace WorkTimeTests
             // Input data from the specified table
             var workTimes = new List<IWorkingHour>
             {
-                new TestWorkingHour { StartDay = WeekDays.Monday, StartHour = 11, StartMinute = 0, EndDay = WeekDays.Tuesday, EndHour = 0, EndMinute = 0 },
-                new TestWorkingHour { StartDay = WeekDays.Tuesday, StartHour = 11, StartMinute = 0, EndDay = WeekDays.Wednesday, EndHour = 0, EndMinute = 0 },
-                new TestWorkingHour { StartDay = WeekDays.Wednesday, StartHour = 11, StartMinute = 0, EndDay = WeekDays.Thursday, EndHour = 0, EndMinute = 0 },
-                new TestWorkingHour { StartDay = WeekDays.Thursday, StartHour = 11, StartMinute = 0, EndDay = WeekDays.Friday, EndHour = 0, EndMinute = 0 },
-                new TestWorkingHour { StartDay = WeekDays.Friday, StartHour = 11, StartMinute = 0, EndDay = WeekDays.Saturday, EndHour = 0, EndMinute = 0 },
-                new TestWorkingHour { StartDay = WeekDays.Saturday, StartHour = 11, StartMinute = 0, EndDay = WeekDays.Saturday, EndHour = 15, EndMinute = 0 },
-                new TestWorkingHour { StartDay = WeekDays.Sunday, StartHour = 11, StartMinute = 0, EndDay = WeekDays.Sunday, EndHour = 15, EndMinute = 0 }
+                new WorkingHour { StartDay = WeekDays.Monday, StartHour = 11, StartMinute = 0, EndDay = WeekDays.Tuesday, EndHour = 0, EndMinute = 0 },
+                new WorkingHour { StartDay = WeekDays.Tuesday, StartHour = 11, StartMinute = 0, EndDay = WeekDays.Wednesday, EndHour = 0, EndMinute = 0 },
+                new WorkingHour { StartDay = WeekDays.Wednesday, StartHour = 11, StartMinute = 0, EndDay = WeekDays.Thursday, EndHour = 0, EndMinute = 0 },
+                new WorkingHour { StartDay = WeekDays.Thursday, StartHour = 11, StartMinute = 0, EndDay = WeekDays.Friday, EndHour = 0, EndMinute = 0 },
+                new WorkingHour { StartDay = WeekDays.Friday, StartHour = 11, StartMinute = 0, EndDay = WeekDays.Saturday, EndHour = 0, EndMinute = 0 },
+                new WorkingHour { StartDay = WeekDays.Saturday, StartHour = 11, StartMinute = 0, EndDay = WeekDays.Saturday, EndHour = 15, EndMinute = 0 },
+                new WorkingHour { StartDay = WeekDays.Sunday, StartHour = 11, StartMinute = 0, EndDay = WeekDays.Sunday, EndHour = 15, EndMinute = 0 }
             };
 
             var result = ComplexWorkingWeek.GetWorkingWeekFromWorktime(workTimes);
@@ -491,6 +492,216 @@ namespace WorkTimeTests
             
             // Verify total: 7 periods (one per day, all valid)
             Assert.Equal(7, periods.Count);
+        }
+
+        [Fact]
+        public void AddWorkingHours_WithMarchBugDate_ValidatesCorrectWorkingWeek()
+        {
+            var workTimes = new List<IWorkingHour>
+            {
+                new WorkingHour { StartDay = WeekDays.Monday, StartHour = 10, StartMinute = 0, EndDay = WeekDays.Tuesday, EndHour = 2, EndMinute = 59 },
+                new WorkingHour { StartDay = WeekDays.Tuesday, StartHour = 10, StartMinute = 0, EndDay = WeekDays.Wednesday, EndHour = 8, EndMinute = 12 },
+                new WorkingHour { StartDay = WeekDays.Wednesday, StartHour = 10, StartMinute = 0, EndDay = WeekDays.Thursday, EndHour = 8, EndMinute = 12 },
+                new WorkingHour { StartDay = WeekDays.Thursday, StartHour = 10, StartMinute = 0, EndDay = WeekDays.Friday, EndHour = 8, EndMinute = 12 },
+                new WorkingHour { StartDay = WeekDays.Friday, StartHour = 10, StartMinute = 0, EndDay = WeekDays.Saturday, EndHour = 8, EndMinute = 12 },
+                new WorkingHour { StartDay = WeekDays.Saturday, StartHour = 11, StartMinute = 0, EndDay = WeekDays.Sunday, EndHour = 0, EndMinute = 0 },
+                new WorkingHour { StartDay = WeekDays.Sunday, StartHour = 11, StartMinute = 0, EndDay = WeekDays.Monday, EndHour = 0, EndMinute = 0 },
+                new WorkingHour { StartDay = WeekDays.Tuesday, StartHour = 3, StartMinute = 0, EndDay = WeekDays.Tuesday, EndHour = 8, EndMinute = 12 }
+            };
+
+            var workingWeek = ComplexWorkingWeek.GetWorkingWeekFromWorktime(workTimes);
+
+            var startPeriod = DateTime.UtcNow;
+            var endPeriod = DateTime.UtcNow;
+            var startDate = new LocalDateTime(startPeriod.Year, startPeriod.Month, 23, 20, 0, 0);
+            var endDate = new LocalDateTime(endPeriod.Year, endPeriod.Month, 23, 20, 59, 59);
+
+            var workingTable = new WorkingHoursTable(
+                workingWeek,
+                new List<WorkingDaySlice>(),
+                new SortedSet<WorkingDaySlice>(),
+                startDate,
+                endDate
+            );
+
+            var date = new DateTime(2026, 3, 23, 20, 15, 0);
+
+            var hours = 0;
+            var minutes = 40;
+            var result = workingTable.addWorkingHours(date, hours, minutes);
+            var expectedResult = new DateTime(2026, 3, 23, 20, 55, 0);
+            Assert.Equal(expectedResult, result);
+        }
+
+        [Fact]
+        public void AddWorkingHours_WithTwoPeriodsInDay_AddsHoursAcrossPeriods()
+        {
+            // Two non-overlapping periods: Monday 8:00-12:00 and Monday 14:00-18:00
+            var workTimes = new List<IWorkingHour>
+            {
+                new WorkingHour { StartDay = WeekDays.Monday, StartHour = 8, StartMinute = 0, EndDay = WeekDays.Monday, EndHour = 12, EndMinute = 0 },
+                new WorkingHour { StartDay = WeekDays.Monday, StartHour = 14, StartMinute = 0, EndDay = WeekDays.Monday, EndHour = 18, EndMinute = 0 }
+            };
+
+            var workingWeek = ComplexWorkingWeek.GetWorkingWeekFromWorktime(workTimes);
+
+            var startPeriod = DateTime.UtcNow;
+            var endPeriod = DateTime.UtcNow;
+            var startDate = new LocalDateTime(startPeriod.Year, startPeriod.Month, 23, 8, 0, 0);
+            var endDate = new LocalDateTime(endPeriod.Year, endPeriod.Month, 23, 18, 0, 0);
+
+            var workingTable = new WorkingHoursTable(
+                workingWeek,
+                new List<WorkingDaySlice>(),
+                new SortedSet<WorkingDaySlice>(),
+                startDate,
+                endDate
+            );
+
+            // Starting at 11:00 AM on Monday (March 23, 2026), add 3 hours
+            // Should skip lunch break (12:00-14:00) and end at 16:00
+            var date = new DateTime(2026, 3, 23, 11, 0, 0);
+            var hours = 3;
+            var minutes = 0;
+            var result = workingTable.addWorkingHours(date, hours, minutes);
+            var expectedResult = new DateTime(2026, 3, 23, 16, 0, 0);
+            Assert.Equal(expectedResult, result);
+        }
+
+        [Fact]
+        public void AddWorkingHours_WithNightShift_CalculatesCorrectly()
+        {
+            var workTimes = new List<IWorkingHour>
+            {
+                new WorkingHour { StartDay = WeekDays.Tuesday, StartHour = 20, StartMinute = 0, EndDay = WeekDays.Wednesday, EndHour = 4, EndMinute = 0 }
+            };
+
+            var workingWeek = ComplexWorkingWeek.GetWorkingWeekFromWorktime(workTimes);
+
+            var startPeriod = DateTime.UtcNow;
+            var endPeriod = DateTime.UtcNow;
+            var startDate = new LocalDateTime(startPeriod.Year, startPeriod.Month, 24, 20, 0, 0);
+            var endDate = new LocalDateTime(endPeriod.Year, endPeriod.Month, 25, 4, 0, 0);
+
+            var workingTable = new WorkingHoursTable(
+                workingWeek,
+                new List<WorkingDaySlice>(),
+                new SortedSet<WorkingDaySlice>(),
+                startDate,
+                endDate
+            );
+
+            // Starting at 22:30 on Tuesday (March 24, 2026), add 5 hours 15 minutes
+            var date = new DateTime(2026, 3, 24, 22, 30, 0);
+            var hours = 5;
+            var minutes = 15;
+            var result = workingTable.addWorkingHours(date, hours, minutes);
+            var expectedResult = new DateTime(2026, 3, 25, 3, 46, 0);
+            Assert.Equal(expectedResult, result);
+        }
+
+        [Fact]
+        public void AddWorkingHours_WithMultiplePeriodsInDay_AddsMinutesCorrectly()
+        {
+            // Three periods on Wednesday: 6:00-10:00, 11:00-15:00, 16:00-20:00
+            var workTimes = new List<IWorkingHour>
+            {
+                new WorkingHour { StartDay = WeekDays.Wednesday, StartHour = 6, StartMinute = 0, EndDay = WeekDays.Wednesday, EndHour = 10, EndMinute = 0 },
+                new WorkingHour { StartDay = WeekDays.Wednesday, StartHour = 11, StartMinute = 0, EndDay = WeekDays.Wednesday, EndHour = 15, EndMinute = 0 },
+                new WorkingHour { StartDay = WeekDays.Wednesday, StartHour = 16, StartMinute = 0, EndDay = WeekDays.Wednesday, EndHour = 20, EndMinute = 0 }
+            };
+
+            var workingWeek = ComplexWorkingWeek.GetWorkingWeekFromWorktime(workTimes);
+
+            var startPeriod = DateTime.UtcNow;
+            var endPeriod = DateTime.UtcNow;
+            var startDate = new LocalDateTime(startPeriod.Year, startPeriod.Month, 25, 6, 0, 0);
+            var endDate = new LocalDateTime(endPeriod.Year, endPeriod.Month, 25, 20, 0, 0);
+
+            var workingTable = new WorkingHoursTable(
+                workingWeek,
+                new List<WorkingDaySlice>(),
+                new SortedSet<WorkingDaySlice>(),
+                startDate,
+                endDate
+            );
+
+            // Starting at 9:30 AM on Wednesday (March 25, 2026), add 6 hours 45 minutes
+            // Should skip breaks and end at 18:15
+            var date = new DateTime(2026, 3, 25, 9, 30, 0);
+            var hours = 6;
+            var minutes = 45;
+            var result = workingTable.addWorkingHours(date, hours, minutes);
+            var expectedResult = new DateTime(2026, 3, 25, 18, 15, 0);
+            Assert.Equal(expectedResult, result);
+        }
+
+        [Fact]
+        public void AddWorkingHours_WithExtendedShift_SpansMultipleDays()
+        {
+            // Long shift: Thursday 18:00 to Friday 06:00
+            var workTimes = new List<IWorkingHour>
+            {
+                new WorkingHour { StartDay = WeekDays.Thursday, StartHour = 18, StartMinute = 0, EndDay = WeekDays.Friday, EndHour = 6, EndMinute = 0 }
+            };
+
+            var workingWeek = ComplexWorkingWeek.GetWorkingWeekFromWorktime(workTimes);
+
+            var startPeriod = DateTime.UtcNow;
+            var endPeriod = DateTime.UtcNow;
+            var startDate = new LocalDateTime(startPeriod.Year, startPeriod.Month, 26, 18, 0, 0);
+            var endDate = new LocalDateTime(endPeriod.Year, endPeriod.Month, 27, 6, 0, 0);
+
+            var workingTable = new WorkingHoursTable(
+                workingWeek,
+                new List<WorkingDaySlice>(),
+                new SortedSet<WorkingDaySlice>(),
+                startDate,
+                endDate
+            );
+
+            // Starting at 19:00 on Thursday (March 26, 2026), add 8 hours 30 minutes
+            var date = new DateTime(2026, 3, 26, 19, 0, 0);
+            var hours = 8;
+            var minutes = 30;
+            var result = workingTable.addWorkingHours(date, hours, minutes);
+            var expectedResult = new DateTime(2026, 3, 27, 3, 31, 0);
+            Assert.Equal(expectedResult, result);
+        }
+
+        [Fact]
+        public void AddWorkingHours_WithSplitShift_HandlesGapsCorrectly()
+        {
+            // Split shift on Friday: 7:00-11:30 and 13:30-18:00
+            var workTimes = new List<IWorkingHour>
+            {
+                new WorkingHour { StartDay = WeekDays.Friday, StartHour = 7, StartMinute = 0, EndDay = WeekDays.Friday, EndHour = 11, EndMinute = 30 },
+                new WorkingHour { StartDay = WeekDays.Friday, StartHour = 13, StartMinute = 30, EndDay = WeekDays.Friday, EndHour = 18, EndMinute = 0 }
+            };
+
+            var workingWeek = ComplexWorkingWeek.GetWorkingWeekFromWorktime(workTimes);
+
+            var startPeriod = DateTime.UtcNow;
+            var endPeriod = DateTime.UtcNow;
+            var startDate = new LocalDateTime(startPeriod.Year, startPeriod.Month, 27, 7, 0, 0);
+            var endDate = new LocalDateTime(endPeriod.Year, endPeriod.Month, 27, 18, 0, 0);
+
+            var workingTable = new WorkingHoursTable(
+                workingWeek,
+                new List<WorkingDaySlice>(),
+                new SortedSet<WorkingDaySlice>(),
+                startDate,
+                endDate
+            );
+
+            // Starting at 10:45 on Friday (March 27, 2026), add 2 hours 15 minutes
+            // Should skip lunch break (11:30-13:30) and end at 15:00
+            var date = new DateTime(2026, 3, 27, 10, 45, 0);
+            var hours = 2;
+            var minutes = 15;
+            var result = workingTable.addWorkingHours(date, hours, minutes);
+            var expectedResult = new DateTime(2026, 3, 27, 15, 0, 0);
+            Assert.Equal(expectedResult, result);
         }
     }
 }
