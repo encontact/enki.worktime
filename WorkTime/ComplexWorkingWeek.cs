@@ -1,4 +1,5 @@
 using enki.libs.workhours.domain;
+using enki.libs.workhours.interfaces;
 using NodaTime;
 using System;
 using System.Collections.Generic;
@@ -225,6 +226,33 @@ namespace enki.libs.workhours
                 sum++;
             }
             return sum;
+        }
+
+        /// <summary>
+        /// Efetua a conversão de uma lista de IWorkingHour para um ComplexWorkingWeek, 
+        /// onde cada IWorkingHour representa um periodo de trabalho que permite sobreposição
+        /// de períodos.
+        /// 
+        /// Este método tem como objetivo converter a estrutura para uma lista organizada sem sobreposição de períodos, 
+        /// onde cada dia da semana pode conter um ou mais períodos de trabalho, 
+        /// e os períodos podem se estender por mais de um dia da semana.
+        /// </summary>
+        /// <param name="workTimes">Lista de períodos de trabalho a serem convertidos</param>
+        /// <returns>Um objeto ComplexWorkingWeek representando a semana de trabalho organizada sem repetições</returns>
+        private static WorkingWeek GetWorkingWeekFromWorktime(IEnumerable<IWorkingHour> workTimes)
+        {
+            if (workTimes != null && workTimes.Any())
+            {
+                var workingWeek = new ComplexWorkingWeek();
+
+                foreach (var day in workTimes)
+                {
+                    workingWeek.setWorkPeriod((int)day.StartDay, (int)day.EndDay, new LocalTime(day.StartHour, day.StartMinute), new LocalTime(day.EndHour, day.EndMinute));
+                }
+                return workingWeek;
+            }
+
+            return ComplexWorkingWeek.getWeek24x7();
         }
 
         /// <summary>
