@@ -239,7 +239,7 @@ namespace enki.libs.workhours
         /// </summary>
         /// <param name="workTimes">Lista de períodos de trabalho a serem convertidos</param>
         /// <returns>Um objeto ComplexWorkingWeek representando a semana de trabalho organizada sem repetições</returns>
-        private static WorkingWeek GetWorkingWeekFromWorktime(IEnumerable<IWorkingHour> workTimes)
+        public static WorkingWeek GetWorkingWeekFromWorktime(IEnumerable<IWorkingHour> workTimes)
         {
             if (workTimes != null && workTimes.Any())
             {
