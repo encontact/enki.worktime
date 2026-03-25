@@ -105,10 +105,18 @@ namespace enki.libs.workhours
                 throw new ArgumentException($"The value {dayOfWeek} is not a valid day of week.", nameof(dayOfWeek));
 
             dayPeriods = dayPeriods == null ? new List<WorkingPeriod>() : dayPeriods;
+            
+            var startMinutes = ToStartMinutes(start);
+            var endMinutes = ToEndMinutes(end);
+            
+            // Não adiciona períodos onde start == end (zero tempo útil)
+            if (startMinutes == endMinutes)
+                return;
+                
             dayPeriods.Add(new WorkingPeriod(
                 dayOfWeek,
-                ToStartMinutes(start),
-                ToEndMinutes(end)
+                startMinutes,
+                endMinutes
             ));
         }
 
@@ -138,9 +146,14 @@ namespace enki.libs.workhours
                 var daysBetween = GetDaysBetween((IsoDayOfWeek)startDay, (IsoDayOfWeek)endDay);
                 if (daysBetween.Count == 1)
                 {
-                    dayPeriods.Add(new WorkingPeriod(startDay,
-                        (short)Period.Between(MIDNIGHT, start, PeriodUnits.Minutes).Minutes,
-                        (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes));
+                    var startMinutes = (short)Period.Between(MIDNIGHT, start, PeriodUnits.Minutes).Minutes;
+                    var endMinutes = (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes;
+                    
+                    // Não adiciona períodos onde start == end (zero tempo útil)
+                    if (startMinutes != endMinutes)
+                    {
+                        dayPeriods.Add(new WorkingPeriod(startDay, startMinutes, endMinutes));
+                    }
                 }
                 if (daysBetween.Count > 1)
                 {
@@ -155,9 +168,14 @@ namespace enki.libs.workhours
                         }
                         if (day == daysBetween.Last())
                         {
-                            dayPeriods.Add(new WorkingPeriod((int)day,
-                                (short)Period.Between(MIDNIGHT, MIDNIGHT, PeriodUnits.Minutes).Minutes,
-                                (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes));
+                            var endMinutes = (short)Period.Between(MIDNIGHT, end, PeriodUnits.Minutes).Minutes;
+                            
+                            // Não adiciona períodos onde start == end (zero tempo útil)
+                            // Neste caso, start é sempre 0 (meia-noite)
+                            if (endMinutes != 0)
+                            {
+                                dayPeriods.Add(new WorkingPeriod((int)day, 0, endMinutes));
+                            }
                             continue;
                         }
 

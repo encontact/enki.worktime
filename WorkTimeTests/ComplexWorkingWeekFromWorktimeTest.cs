@@ -434,6 +434,10 @@ namespace WorkTimeTests
             Assert.NotNull(complexWeek);
             var periods = complexWeek.getPeriods();
             
+            // CRITICAL: Verify NO period has start == end
+            var invalidPeriods = periods.Where(p => p.startPeriod == p.endPeriod).ToList();
+            Assert.Empty(invalidPeriods); // No invalid periods should exist
+            
             // Verify no duplicate periods for the same day with same start and end times
             var groupedByDay = periods.GroupBy(p => p.dayOfWeek);
             foreach (var dayGroup in groupedByDay)
@@ -442,35 +446,42 @@ namespace WorkTimeTests
                 Assert.Equal(dayGroup.Count(), uniquePeriods.Count());
             }
             
-            // Detailed validation of expected periods
-            // Monday: 11:00 to end of day (23:59)
+            // Expected result after filtering invalid periods:
+            // Monday: 11:00 to 23:59 (end of day)
             var mondayPeriods = periods.Where(p => p.dayOfWeek == (int)IsoDayOfWeek.Monday).ToList();
             Assert.Single(mondayPeriods);
             Assert.Equal(660, mondayPeriods[0].startPeriod); // 11 * 60
             Assert.Equal(1439, mondayPeriods[0].endPeriod); // End of day
             
-            // Tuesday: 00:00 to 23:59 (full day since it appears in two overlapping periods)
+            // Tuesday: Only 11:00 to 23:59 (the 00:00-00:00 period should be filtered out)
             var tuesdayPeriods = periods.Where(p => p.dayOfWeek == (int)IsoDayOfWeek.Tuesday).ToList();
-            Assert.Equal(2, tuesdayPeriods.Count); // Two periods: end of Mon-Tue period, start of Tue-Wed period
+            Assert.Single(tuesdayPeriods);
+            Assert.Equal(660, tuesdayPeriods[0].startPeriod); // 11 * 60
+            Assert.Equal(1439, tuesdayPeriods[0].endPeriod); // End of day
             
-            // Wednesday: Should have overlapping periods from Tue-Wed and Wed-Thu
+            // Wednesday: Only 11:00 to 23:59
             var wednesdayPeriods = periods.Where(p => p.dayOfWeek == (int)IsoDayOfWeek.Wednesday).ToList();
-            Assert.Equal(2, wednesdayPeriods.Count);
+            Assert.Single(wednesdayPeriods);
+            Assert.Equal(660, wednesdayPeriods[0].startPeriod);
+            Assert.Equal(1439, wednesdayPeriods[0].endPeriod);
             
-            // Thursday: Should have overlapping periods from Wed-Thu and Thu-Fri
+            // Thursday: Only 11:00 to 23:59
             var thursdayPeriods = periods.Where(p => p.dayOfWeek == (int)IsoDayOfWeek.Thursday).ToList();
-            Assert.Equal(2, thursdayPeriods.Count);
+            Assert.Single(thursdayPeriods);
+            Assert.Equal(660, thursdayPeriods[0].startPeriod);
+            Assert.Equal(1439, thursdayPeriods[0].endPeriod);
             
-            // Friday: Should have overlapping periods from Thu-Fri and Fri-Sat
+            // Friday: Only 11:00 to 23:59
             var fridayPeriods = periods.Where(p => p.dayOfWeek == (int)IsoDayOfWeek.Friday).ToList();
-            Assert.Equal(2, fridayPeriods.Count);
+            Assert.Single(fridayPeriods);
+            Assert.Equal(660, fridayPeriods[0].startPeriod);
+            Assert.Equal(1439, fridayPeriods[0].endPeriod);
             
-            // Saturday: Should have two distinct periods (end of Fri-Sat at 00:00 and Sat 11:00-15:00)
-            var saturdayPeriods = periods.Where(p => p.dayOfWeek == (int)IsoDayOfWeek.Saturday).OrderBy(p => p.startPeriod).ToList();
-            Assert.Equal(2, saturdayPeriods.Count);
-            Assert.Equal(0, saturdayPeriods[0].startPeriod); // From Friday-Saturday period
-            Assert.Equal(660, saturdayPeriods[1].startPeriod); // 11 * 60 - Saturday standalone period
-            Assert.Equal(900, saturdayPeriods[1].endPeriod); // 15 * 60
+            // Saturday: Only 11:00-15:00 (the 00:00-00:00 period should be filtered out)
+            var saturdayPeriods = periods.Where(p => p.dayOfWeek == (int)IsoDayOfWeek.Saturday).ToList();
+            Assert.Single(saturdayPeriods);
+            Assert.Equal(660, saturdayPeriods[0].startPeriod); // 11 * 60
+            Assert.Equal(900, saturdayPeriods[0].endPeriod); // 15 * 60
             
             // Sunday: Single period 11:00-15:00
             var sundayPeriods = periods.Where(p => p.dayOfWeek == (int)IsoDayOfWeek.Sunday).ToList();
@@ -478,8 +489,8 @@ namespace WorkTimeTests
             Assert.Equal(660, sundayPeriods[0].startPeriod); // 11 * 60
             Assert.Equal(900, sundayPeriods[0].endPeriod); // 15 * 60
             
-            // Verify total number of periods
-            Assert.True(periods.Count >= 7, $"Expected at least 7 periods, but got {periods.Count}");
+            // Verify total: 7 periods (one per day, all valid)
+            Assert.Equal(7, periods.Count);
         }
     }
 }
