@@ -397,22 +397,21 @@ namespace enki.libs.workhours
 
             var minutes = getWorkingMinutesBetween(start, end);
 
-            DateTime lastDayStart = new DateTime(end.Year, end.Month, end.Day, 0, 0, 0).AddMinutes(workDay[endIndex].getMinStartDayPart());
-            DateTime lastDayEnd = new DateTime(end.Year, end.Month, end.Day, 0, 0, 0).AddMinutes(workDay[endIndex].getMaxEndDayPart());
-
-            if (end > lastDayStart && end < lastDayEnd)
+            // O ajuste dos segundos parciais só pode ser aplicado quando o horário está dentro de um
+            // período útil real do dia. Não basta estar entre o início do primeiro período e o fim do
+            // último (envelope do dia): horários dentro de um intervalo entre períodos (ex: pausa de
+            // almoço) não são tempo útil e o ajuste geraria valores negativos ou inflados.
+            if (workDay[endIndex].isWithinWorkingPeriod(new LocalTime(end.Hour, end.Minute, end.Second)))
                 secondsDifference += end.Second;
 
-            DateTime firstDayStart = new DateTime(start.Year, start.Month, start.Day, 0, 0, 0).AddMinutes(workDay[startIndex].getMinStartDayPart());
-            DateTime firstDayEnd = new DateTime(start.Year, start.Month, start.Day, 0, 0, 0).AddMinutes(workDay[startIndex].getMaxEndDayPart());
-
-            if (start > firstDayStart && start < firstDayEnd)
-                secondsDifference -= start.Second;            
+            if (workDay[startIndex].isWithinWorkingPeriod(new LocalTime(start.Hour, start.Minute, start.Second)))
+                secondsDifference -= start.Second;
 
             // Converte minutos para segundos e soma a diferença
             var totalSeconds = (minutes * 60) + secondsDifference;
 
-            return totalSeconds;
+            // Proteção: tempo útil nunca pode ser negativo, mesmo com dados de entrada inconsistentes.
+            return totalSeconds < 0 ? 0 : totalSeconds;
         }
 
 

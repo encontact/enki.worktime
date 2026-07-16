@@ -207,6 +207,34 @@ namespace enki.libs.workhours
         }
 
         /// <summary>
+        /// Verifica se um determinado horario esta dentro de alguma das partes uteis do dia.
+        /// A comparacao é feita na granularidade de minutos, sendo o inicio da fatia inclusivo
+        /// e o final exclusivo. Ex: fatia das 08:00 as 12:00 contem 08:00:30 mas nao contem 12:00:30.
+        /// </summary>
+        /// <returns>
+        /// Verdadeiro se o horario informado pertence a algum periodo util do dia.
+        /// </returns>
+        public bool isWithinWorkingPeriod(LocalTime time)
+        {
+            //Recupera a quantidade de minutos entre as 00:00 do dia e a hora a ser validada.
+            int timeMinutes = (int)Period.Between(
+                new LocalDateTime(2000, 01, 01, 0, 0, 0),
+                new LocalDateTime(2000, 01, 01, time.Hour, time.Minute, time.Second),
+                PeriodUnits.Minutes
+            ).Minutes;
+
+            foreach (SimpleWorkingDay slice in this.dayParts)
+            {
+                if (timeMinutes >= slice.getDayStart() && timeMinutes < slice.getDayEnd())
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Recupera o numero total de minutos uteis do dia ate um determinado horario.
         /// </summary>
         /// <returns>
