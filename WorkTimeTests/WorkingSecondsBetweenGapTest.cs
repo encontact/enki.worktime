@@ -131,5 +131,98 @@ namespace enki.tests.libs.date
 
             Assert.Equal(1800, seconds);
         }
+
+        [Fact]
+        public void GetWorkingSecondsBetween_EventoCruzandoOGapInteiro_SomaOsSegundosDosDoisLados()
+        {
+            var table = CreateTableWithLunchGap();
+
+            // Início 10s antes do fim do primeiro período (11:59:50) e fim 10s após o retorno (14:00:10).
+            // Tempo útil real = 10s (11:59:50 -> 12:00:00) + 10s (14:00:00 -> 14:00:10) = 20s.
+            var seconds = table.getWorkingSecondsBetween(
+                new DateTime(2026, 7, 14, 11, 59, 50),
+                new DateTime(2026, 7, 14, 14, 0, 10)
+            );
+
+            Assert.Equal(20, seconds);
+        }
+
+        [Fact]
+        public void GetWorkingSecondsBetween_InicioNoMinutoExatoDoFimDoPeriodo_NaoDeveSubtrairSegundos()
+        {
+            var table = CreateTableWithLunchGap();
+
+            // O período da manhã termina às 12:00, então 12:00:30 já está dentro do gap.
+            // Tempo útil real = 30min (14:00:00 -> 14:30:00) = 1800s.
+            var seconds = table.getWorkingSecondsBetween(
+                new DateTime(2026, 7, 14, 12, 0, 30),
+                new DateTime(2026, 7, 14, 14, 30, 0)
+            );
+
+            Assert.Equal(1800, seconds);
+        }
+
+        [Fact]
+        public void GetWorkingSecondsBetween_GapCriadoPorFeriadoParcial_DeveSerZero()
+        {
+            // Dia útil de período único (08:00-18:00) com feriado parcial das 10:00 as 16:00.
+            // O feriado recorta o dia em [08:00-10:00] e [16:00-18:00], criando um gap no meio do envelope.
+            var week = new ComplexWorkingWeek();
+            for (var day = (int)IsoDayOfWeek.Monday; day <= (int)IsoDayOfWeek.Friday; day++)
+            {
+                week.setWorkPeriod(day, day, new LocalTime(8, 0), new LocalTime(18, 0));
+            }
+
+            var holidays = new SortedSet<WorkingDaySlice>
+            {
+                // 10:00 = 600 minutos | 16:00 = 960 minutos
+                new SimpleWorkingDay(new DateTime(2026, 7, 14), (short)600, (short)960)
+            };
+
+            var table = new WorkingHoursTable(
+                week, new List<WorkingDaySlice>(), holidays,
+                new LocalDateTime(2026, 7, 13, 0, 0, 0), new LocalDateTime(2026, 7, 14, 0, 0, 0)
+            );
+
+            // Evento inteiro dentro do gap criado pelo feriado: tempo útil real = 0.
+            var seconds = table.getWorkingSecondsBetween(
+                new DateTime(2026, 7, 14, 12, 0, 59),
+                new DateTime(2026, 7, 14, 12, 45, 0)
+            );
+
+            Assert.Equal(0, seconds);
+        }
+
+        [Fact]
+        public void GetWorkingSecondsBetween_MultiDiaComInicioEFimEmGaps_ContaApenasOsPeriodosUteis()
+        {
+            var table = CreateTableWithLunchGap();
+
+            // 17/07/2026 é sexta e 20/07/2026 é segunda (sábado e domingo sem expediente).
+            // Início no gap da sexta e fim no gap da segunda.
+            // Tempo útil real = tarde de sexta (4h) + manhã de segunda (4h) = 8h = 28800s.
+            // Bug atual: retorna 28755 (subtrai os 45s do início mesmo estando no gap).
+            var seconds = table.getWorkingSecondsBetween(
+                new DateTime(2026, 7, 17, 12, 30, 45),
+                new DateTime(2026, 7, 20, 12, 40, 0)
+            );
+
+            Assert.Equal(28800, seconds);
+        }
+
+        [Fact]
+        public void GetWorkingSecondsBetween_FimAnteriorAoInicio_DeveSerZero()
+        {
+            var table = CreateTableWithLunchGap();
+
+            // Proteção contra dados de entrada inconsistentes (ex: relógios dessincronizados
+            // gravando fim anterior ao início). O tempo útil nunca pode ser negativo.
+            var seconds = table.getWorkingSecondsBetween(
+                new DateTime(2026, 7, 14, 10, 0, 59),
+                new DateTime(2026, 7, 14, 10, 0, 0)
+            );
+
+            Assert.Equal(0, seconds);
+        }
     }
 }
